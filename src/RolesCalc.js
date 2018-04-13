@@ -73,9 +73,8 @@ export default class RolesCalc {
   }
 
   _calcAcceptedRoles(role: string): Set<string> {
-    const roles: Set<string> = this._explodeResourceActionRole(role)
-
-    let addedRoles: Array<string> = Array.from(roles)
+    let addedRoles: Array<string> = [role]
+    const roles: Set<string> = new Set(addedRoles)
 
     let sanityCount = INHERITANCE_DEPTH_LIMIT + 1
     while (addedRoles.length) {
@@ -85,15 +84,20 @@ export default class RolesCalc {
       let addedRolesThisPass: Array<string> = []
 
       for (let addedRole of addedRoles) {
-        const parentRoles: ?Set<string> = this._childRolesToParentRoles.get(addedRole)
-        if (parentRoles) {
-          parentRoles.forEach((parentRole: string) => {
-            if (!roles.has(parentRole)) {
-              addedRolesThisPass.push(parentRole)
-              roles.add(parentRole)
-            }
-          })
+        const addIfNotPresent = (role: string) => {
+          if (!roles.has(role)) {
+            addedRolesThisPass.push(role)
+            roles.add(role)
+          }
         }
+
+        // process 'resource:write' > 'resource:read' and 'resource' > 'resource:action' inheritances
+        this._explodeResourceActionRole(addedRole).forEach(addIfNotPresent)
+
+        // process inheritance links added by calls to rc.role('foo').extends('bar')
+        const userConfiguredParentRoles: ?Set<string> = this._childRolesToParentRoles.get(addedRole)
+        if (userConfiguredParentRoles)
+          userConfiguredParentRoles.forEach(addIfNotPresent)
       }
 
       addedRoles = addedRolesThisPass
@@ -113,16 +117,15 @@ export default class RolesCalc {
    * @param role input role
    * @returns Set of roles that would satisfy the requirement of the input role
    */
-  _explodeResourceActionRole(role: string): Set<string> {
-    const result = new Set()
-    result.add(role)
+  _explodeResourceActionRole(role: string): Array<string> {
+    const result = []
     const match = role.match(/^([^:]+):([^:]+)$/)
     if (match) {
       const resource = match[1]
       const action = match[2]
-      result.add(resource)
+      result.push(resource)
       if (this._writeExtendsRead && 'read' === action)
-        result.add(`${resource}:write`)
+        result.push(`${resource}:write`)
     }
     return result
   }

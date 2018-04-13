@@ -82,6 +82,30 @@ describe('RolesCalc', () => {
     expect(rc.isAuthorized({required: 'couch:sweep', actual: 'couch'})).to.equal(true)
   })
 
+  it('correctly interprets the "write extends read" rule at the end of a transitive chain', () => {
+    const rc = new RolesCalc()
+    rc.role('admin').extends('simulations:write')
+    rc.role('simulations:write').extends('loadProfiles:write')
+    expect(rc.isAuthorized({required: 'loadProfiles:read', actual: 'admin'})).to.equal(true) // admin > simulations:write > loadProfiles:write > loadProfiles:read
+    expect(rc.isAuthorized({required: 'loadProfiles:falsify', actual: 'admin'})).to.equal(false) // write does not extend falsify
+  })
+
+  it('correctly interprets the "write extends read" rule in the middle of a transitive chain', () => {
+    const rc = new RolesCalc()
+    rc.role('admin').extends('simulations:write')
+    rc.role('simulations:read').extends('loadProfiles:read')
+    expect(rc.isAuthorized({required: 'loadProfiles:read', actual: 'admin'})).to.equal(true) // admin > simulations:write > loadProfiles:write > loadProfiles:read
+    expect(rc.isAuthorized({required: 'loadProfiles:read', actual: 'loadProfiles:archive'})).to.equal(false)
+  })
+
+  it('correctly interprets the "general extends specific" rule in the middle of a transitive chain', () => {
+    const rc = new RolesCalc()
+    rc.role('admin').extends('foo')
+    rc.role('foo:read').extends('bar:read')
+    expect(rc.isAuthorized({required: 'bar:read', actual: 'admin'})).to.equal(true) // admin > simulations:write > loadProfiles:write > loadProfiles:read
+    expect(rc.isAuthorized({required: 'bar:eat', actual: 'admin'})).to.equal(false)
+  })
+
   it('accepts properly configured global admin permissions', () => {
     const rc = new RolesCalc({alwaysAllow: ['admin', 'owner']})
     expect(rc.isAuthorized({required: 'money:embezzle', actual: 'admin'})).to.equal(true)
@@ -141,23 +165,23 @@ describe('RolesCalc', () => {
   describe('explodeResourceActionRole', () => {
     it('explodes resource:action roles that are extended by other roles', () => {
       const rc = new RolesCalc()
-      expect(Array.from(rc._explodeResourceActionRole('foo:bar'))).to.deep.equal(['foo:bar', 'foo'])
+      expect(rc._explodeResourceActionRole('foo:bar')).to.deep.equal(['foo'])
     })
 
     it('explodes resource:read role into resource:write role when write extends read', () => {
       const rc = new RolesCalc()
-      expect(Array.from(rc._explodeResourceActionRole('foo:read'))).to.deep.equal(['foo:read', 'foo', 'foo:write'])
+      expect(rc._explodeResourceActionRole('foo:read')).to.deep.equal(['foo', 'foo:write'])
     })
 
     it('does not explode resource:read role into resource:write roles when write does not extend read', () => {
       const rc = new RolesCalc({writeExtendsRead: false})
-      expect(Array.from(rc._explodeResourceActionRole('foo:read'))).to.deep.equal(['foo:read', 'foo'])
+      expect(rc._explodeResourceActionRole('foo:read')).to.deep.equal(['foo'])
     })
 
     it('does not explode roles that do not follow the resource:action pattern', () => {
       const rc = new RolesCalc()
       for (let pattern of [':foo', ':', 'baz', ':foo:bar', 'foo:bar:', 'foo:bar:baz']) {
-        expect(Array.from(rc._explodeResourceActionRole(pattern))).to.deep.equal([pattern])
+        expect(rc._explodeResourceActionRole(pattern)).to.deep.equal([])
       }
     })
   })
