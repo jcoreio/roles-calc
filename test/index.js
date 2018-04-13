@@ -162,6 +162,27 @@ describe('RolesCalc', () => {
     expect(rc.isAuthorized({required: 'employee', actual: 'customer'})).to.equal(false)
   })
 
+  describe('pruneRedundantRoles', () => {
+    it('does not change non-redundant roles', () => {
+      const rc = new RolesCalc()
+      expect(rc.pruneRedundantRoles(['foo', 'bar'])).to.deep.equal(['foo', 'bar'])
+    })
+    it('prunes redundant roles based on defined inheritance', () => {
+      const rc = new RolesCalc()
+      rc.role('owner').extends('manager')
+      rc.role('manager').extends('employee')
+      expect(rc.pruneRedundantRoles(['employee', 'manager', 'owner', 'baker'])).to.deep.equal(['owner', 'baker'])
+    })
+    it('prunes redundant roles based on resource:write > resource:read inheritance', () => {
+      const rc = new RolesCalc()
+      expect(rc.pruneRedundantRoles(['foo:read', 'foo:write', 'baker'])).to.deep.equal(['foo:write', 'baker'])
+    })
+    it('prunes redundant roles based on resource > resource:action inheritance', () => {
+      const rc = new RolesCalc()
+      expect(rc.pruneRedundantRoles(['foo:read', 'foo:write', 'foo:burn', 'foo', 'baker'])).to.deep.equal(['foo', 'baker'])
+    })
+  })
+
   describe('explodeResourceActionRole', () => {
     it('explodes resource:action roles that are extended by other roles', () => {
       const rc = new RolesCalc()

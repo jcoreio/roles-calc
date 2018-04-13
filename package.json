@@ -84,6 +84,7 @@
     "travis-deploy-once": "^4.4.1"
   },
   "dependencies": {
-    "lodash.flatten": "^4.4.0"
+    "lodash.flatten": "^4.4.0",
+    "lodash.uniq": "^4.5.0"
   }
 }

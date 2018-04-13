@@ -1,6 +1,7 @@
 // @flow
 
 import flatten from 'lodash.flatten'
+import uniq from 'lodash.uniq'
 
 type RoleModifier = {
   extends: (...childRoles: Array<string | Array<string>>) => void,
@@ -58,26 +59,59 @@ export default class RolesCalc {
     }
 
     // Look up a flattened set of roles that extend the required role
-    let acceptedRoles: ?Set<string> = this._childRolesToParentRolesFlattened.get(required)
-    if (!acceptedRoles) {
-      acceptedRoles = this._calcAcceptedRoles(required)
-      this._childRolesToParentRolesFlattened.set(required, acceptedRoles)
-    }
-
+    const parentRoles: Set<string> = this._getParentRolesSet(required)
     for (let actualRole of actualArr) {
-      if (acceptedRoles.has(actualRole))
+      if (actualRole === required)
+        return true
+      if (parentRoles.has(actualRole))
         return true
     }
 
     return false
   }
 
-  _calcAcceptedRoles(role: string): Set<string> {
+  /**
+   * Removes roles that are redundant due to an inheritance relationship. For example:
+   * rc.role('manager').extends('employee')
+   * rc.pruneRedundantRoles(['manager', 'employee']) -> ['manager']
+   * rc.pruneRedundantRoles(['foo:write', 'foo:read']) -> ['foo:write']
+   * rc.pruneRedundantRoles(['foo', 'foo:write']) -> ['foo']
+   * @param roles
+   */
+  pruneRedundantRoles(roles: Array<string>): Array<string> {
+    const pruned = uniq(roles)
+    for (let childIdx = 0; childIdx < pruned.length; ++childIdx) {
+      const childRole = pruned[childIdx]
+      const parentRoles: Set<string> = this._getParentRolesSet(childRole)
+      if (parentRoles.size) {
+        const parentRoleIdx = pruned.findIndex((value, index) => index !== childIdx && parentRoles.has(value))
+        if (parentRoleIdx >= 0) {
+          // we found a role that is a parent of this child role, so the child role is redundant
+          // and can be removed. Post-decrement childIdx when we remove an element, so that
+          // after it's incremented at the end of the for loop, we check the element that slid left
+          // when we spliced the array
+          pruned.splice(childIdx--, 1)
+        }
+      }
+    }
+    return pruned
+  }
+
+  _getParentRolesSet(role: string): Set<string> {
+    let parentRoles: ?Set<string> = this._childRolesToParentRolesFlattened.get(role)
+    if (!parentRoles) {
+      parentRoles = this._calcParentRolesSet(role)
+      this._childRolesToParentRolesFlattened.set(role, parentRoles)
+    }
+    return parentRoles
+  }
+
+  _calcParentRolesSet(role: string): Set<string> {
     let addedRoles: Array<string> = [role]
-    const roles: Set<string> = new Set(addedRoles)
+    const roles: Set<string> = new Set()
 
     let sanityCount = INHERITANCE_DEPTH_LIMIT + 1
-    while (addedRoles.length) {
+    do {
       if (!sanityCount--)
         throw new Error(`could not flatten roles: inheritance depth of ${INHERITANCE_DEPTH_LIMIT} levels was exceeded`)
 
@@ -101,7 +135,7 @@ export default class RolesCalc {
       }
 
       addedRoles = addedRolesThisPass
-    }
+    } while (addedRoles.length)
     return roles
   }
 
