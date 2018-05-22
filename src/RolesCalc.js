@@ -59,7 +59,7 @@ export default class RolesCalc {
     }
 
     // Look up a flattened set of roles that extend the required role
-    const parentRoles: Set<string> = this._getParentRolesSet(required)
+    const parentRoles: Set<string> = this.getParentRolesSet(required)
     for (let actualRole of actualArr) {
       if (actualRole === required)
         return true
@@ -82,7 +82,7 @@ export default class RolesCalc {
     const pruned = uniq(roles)
     for (let childIdx = 0; childIdx < pruned.length; ++childIdx) {
       const childRole = pruned[childIdx]
-      const parentRoles: Set<string> = this._getParentRolesSet(childRole)
+      const parentRoles: Set<string> = this.getParentRolesSet(childRole)
       if (parentRoles.size) {
         const parentRoleIdx = pruned.findIndex((value, index) => index !== childIdx && parentRoles.has(value))
         if (parentRoleIdx >= 0) {
@@ -97,7 +97,7 @@ export default class RolesCalc {
     return pruned
   }
 
-  _getParentRolesSet(role: string): Set<string> {
+  getParentRolesSet(role: string): Set<string> {
     let parentRoles: ?Set<string> = this._childRolesToParentRolesFlattened.get(role)
     if (!parentRoles) {
       parentRoles = this._calcParentRolesSet(role)
