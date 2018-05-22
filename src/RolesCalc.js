@@ -107,6 +107,7 @@ export default class RolesCalc {
   }
 
   _calcParentRolesSet(role: string): Set<string> {
+    const {action} = toResourceAndAction(role)
     let addedRoles: Array<string> = [role]
     const roles: Set<string> = new Set(this._alwaysAllow)
 
@@ -130,8 +131,16 @@ export default class RolesCalc {
 
         // process inheritance links added by calls to rc.role('foo').extends('bar')
         const userConfiguredParentRoles: ?Set<string> = this._childRolesToParentRoles.get(addedRole)
-        if (userConfiguredParentRoles)
-          userConfiguredParentRoles.forEach(addIfNotPresent)
+        if (userConfiguredParentRoles) {
+          userConfiguredParentRoles.forEach((parentRole: string) => {
+            addIfNotPresent(parentRole)
+            if (action && !toResourceAndAction(parentRole).action) {
+              // This is a parent > child relationship, and we're looking for a child:action
+              // permission. In this case, parent:action > child:action
+              addIfNotPresent(`${parentRole}:${action}`)
+            }
+          })
+        }
       }
 
       addedRoles = addedRolesThisPass
@@ -153,15 +162,21 @@ export default class RolesCalc {
    */
   _explodeResourceActionRole(role: string): Array<string> {
     const result = []
-    const match = role.match(/^([^:]+):([^:]+)$/)
-    if (match) {
-      const resource = match[1]
-      const action = match[2]
+    const {resource, action} = toResourceAndAction(role)
+    if (resource && action) {
       result.push(resource)
       if (this._writeExtendsRead && 'read' === action)
         result.push(`${resource}:write`)
     }
     return result
+  }
+}
+
+function toResourceAndAction(role: string): {resource: ?string, action: ?string} {
+  const match = role.match(/^([^:]+):([^:]+)$/)
+  return {
+    resource: match ? match[1] : null,
+    action: match ? match[2] : null
   }
 }
 

@@ -162,6 +162,19 @@ describe('RolesCalc', () => {
     expect(rc.isAuthorized({required: 'employee', actual: 'customer'})).to.equal(false)
   })
 
+  it('infers that parent:action > child:action when parent > child', () => {
+    const rc = new RolesCalc()
+    rc.role('parent').extends('child')
+    expect(rc.isAuthorized({required: 'child:read', actual: 'parent:read'})).to.equal(true)
+    expect(rc.isAuthorized({required: 'child:read', actual: 'parent'})).to.equal(true)
+  })
+
+  it('infers that parent:action does not extend child:different_action when parent > child', () => {
+    const rc = new RolesCalc()
+    rc.role('parent').extends('child')
+    expect(rc.isAuthorized({required: 'child:read', actual: 'parent:feed'})).to.equal(false)
+  })
+
   describe('pruneRedundantRoles', () => {
     it('does not change non-redundant roles', () => {
       const rc = new RolesCalc()
