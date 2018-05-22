@@ -126,7 +126,7 @@ export default class RolesCalc {
         }
 
         // process 'resource:write' > 'resource:read' and 'resource' > 'resource:action' inheritances
-        this._explodeResourceActionRole(addedRole).forEach(addIfNotPresent)
+        this.explodeResourceActionRole(addedRole).forEach(addIfNotPresent)
 
         // process inheritance links added by calls to rc.role('foo').extends('bar')
         const userConfiguredParentRoles: ?Set<string> = this._childRolesToParentRoles.get(addedRole)
@@ -151,8 +151,8 @@ export default class RolesCalc {
    * @param role input role
    * @returns Set of roles that would satisfy the requirement of the input role
    */
-  _explodeResourceActionRole(role: string): Array<string> {
-    const result = []
+  explodeResourceActionRole(role: string): Array<string> {
+    const result = [...this._alwaysAllow]
     const match = role.match(/^([^:]+):([^:]+)$/)
     if (match) {
       const resource = match[1]
@@ -163,7 +163,7 @@ export default class RolesCalc {
     }
     return result
   }
-}
+
 
 function toArray(maybeArray: string | Array<string>): Array<string> {
   return Array.isArray(maybeArray) ? maybeArray : [maybeArray]
