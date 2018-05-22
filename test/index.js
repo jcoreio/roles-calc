@@ -31,12 +31,6 @@ describe('RolesCalc', () => {
     expect(rc.isAuthorized({required: 'employee', actual: 'supervisor'})).to.equal(true)
   })
 
-  it('accepts a directly extended role', () => {
-    const rc = new RolesCalc()
-    rc.role('supervisor').extends('employee')
-    expect(rc.isAuthorized({required: 'employee', actual: 'supervisor'})).to.equal(true)
-  })
-
   it('accepts directly extended roles from rest parameters', () => {
     const rc = new RolesCalc()
     rc.role('supervisor').extends('employee', 'person')
@@ -104,6 +98,18 @@ describe('RolesCalc', () => {
     rc.role('foo:read').extends('bar:read')
     expect(rc.isAuthorized({required: 'bar:read', actual: 'admin'})).to.equal(true) // admin > simulations:write > loadProfiles:write > loadProfiles:read
     expect(rc.isAuthorized({required: 'bar:eat', actual: 'admin'})).to.equal(false)
+  })
+
+  it('super evil challenge', () => {
+    const rc = new RolesCalc({alwaysAllow: 'admin'})
+    rc.role('blah').extends('admin')
+    rc.role('foo:read').extends('bar:read')
+    rc.role('bar:read').extends('baz:write')
+    rc.role('baz:read').extends('qux')
+    rc.role('qux').extends('glorm')
+    rc.role('glorm:write').extends('flok')
+    expect(rc.isAuthorized({required: 'flok', actual: 'admin'})).to.equal(true)
+    expect(rc.isAuthorized({required: 'flok', actual: 'blah'})).to.equal(true)
   })
 
   it('accepts properly configured global admin permissions', () => {
