@@ -91,6 +91,12 @@ describe('RolesCalc', () => {
         expect(rc.isAuthorized({required: `foo${sep}read`, actual: `foo${sep}write`})).to.equal(true)
       })
 
+      it('accepts a read permission implied by a write permission on a parent resource', () => {
+        const rc = new RolesCalc({resourceActionSeparator: sep})
+        rc.role('parent').extends('child')
+        expect(rc.isAuthorized({required: `child${sep}read`, actual: `parent${sep}write`})).to.equal(true)
+      })
+
       it('obeys a writeExtendsRead:false setting', () => {
         const rc = new RolesCalc({resourceActionSeparator: sep, writeExtendsRead: false})
         expect(rc.isAuthorized({required: `foo${sep}read`, actual: `foo${sep}write`})).to.equal(false)
@@ -210,6 +216,11 @@ describe('RolesCalc', () => {
           rc.role('owner').extends('manager')
           rc.role('manager').extends('employee')
           expect(rc.pruneRedundantRoles(['employee', 'manager', 'owner', 'baker'])).to.deep.equal(['owner', 'baker'])
+        })
+        it('prunes redundant roles based on a parent:write > child:read relationship', () => {
+          const rc = new RolesCalc({resourceActionSeparator: sep})
+          rc.role('parent').extends('child')
+          expect(rc.pruneRedundantRoles([`parent${sep}write`, `child${sep}read`])).to.deep.equal([`parent${sep}write`])
         })
         it('prunes redundant roles based on resource:write > resource:read inheritance', () => {
           const rc = new RolesCalc({resourceActionSeparator: sep})
