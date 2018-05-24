@@ -242,6 +242,19 @@ describe('RolesCalc', () => {
         })
       })
     })
+
+    describe('getParentRolesSet', () => {
+      it('always returns a new set', () => {
+        const rc = new RolesCalc({alwaysAllow: ['admin']})
+        expect(rc.getParentRolesSet('foo')).not.to.equal(rc.getParentRolesSet('foo'))
+      })
+    })
+    describe('getRoleAndParentRolesSet', () => {
+      it('includes the queried role', () => {
+        const rc = new RolesCalc({alwaysAllow: ['admin']})
+        expect(rc.getRoleAndParentRolesSet('foo').has('foo')).to.be.true
+      })
+    })
   }
   testForSeparator(':')
   testForSeparator('_')
