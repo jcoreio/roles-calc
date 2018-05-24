@@ -23,7 +23,7 @@ export default class RolesCalc {
   constructor(opts: {
     alwaysAllow?: ?string | ?Array<string>,
     writeExtendsRead?: ?boolean,
-    resourceActionSeparator?: ?boolean,
+    resourceActionSeparator?: ?string,
   } = {}) {
     const {alwaysAllow, writeExtendsRead, resourceActionSeparator} = opts
     if (resourceActionSeparator != null && resourceActionSeparator.length !== 1) {
