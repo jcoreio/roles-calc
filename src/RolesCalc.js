@@ -12,7 +12,7 @@ export const INHERITANCE_DEPTH_LIMIT = 20
 export default class RolesCalc {
   _resourceActionRegex: RegExp
   _resourceActionSeparator: string
-  _alwaysAllow: Array<string>
+  _alwaysAllow: Set<string>
   _writeExtendsRead: boolean // defaults to true
 
   /** relationships, as defined by the user */
@@ -29,7 +29,7 @@ export default class RolesCalc {
     if (resourceActionSeparator != null && resourceActionSeparator.length !== 1) {
       throw new Error('resourceActionSeparator must be a single character')
     }
-    this._alwaysAllow = toArray(alwaysAllow || [])
+    this._alwaysAllow = new Set(toArray(alwaysAllow || []))
     this._writeExtendsRead = writeExtendsRead == null ? true : !!writeExtendsRead // default to true
     this._resourceActionSeparator = resourceActionSeparator || ':'
     const sep = this._resourceActionSeparator
@@ -121,12 +121,12 @@ export default class RolesCalc {
 
   _calcParentRolesSet(role: string): Set<string> {
     const {action} = this._toResourceAndAction(role)
-    let addedRoles: Array<string> = [role]
-    const roles: Set<string> = new Set(this._alwaysAllow)
-    roles.delete(role) // handle the case where 'role' is an 'always allow' role - don't duplicate it here
+
+    const roles: Set<string> = new Set([role, ...this._alwaysAllow])
+    let addedRoles: Array<string> = [...roles]
 
     let sanityCount = INHERITANCE_DEPTH_LIMIT + 1
-    do {
+    while (addedRoles.length) {
       if (!sanityCount--)
         throw new Error(`could not flatten roles: inheritance depth of ${INHERITANCE_DEPTH_LIMIT} levels was exceeded`)
 
@@ -158,7 +158,8 @@ export default class RolesCalc {
       }
 
       addedRoles = addedRolesThisPass
-    } while (addedRoles.length)
+    }
+    roles.delete(role)
     return roles
   }
 
