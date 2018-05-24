@@ -18,6 +18,10 @@ describe('RolesCalc', () => {
       const rc = new RolesCalc({alwaysAllow: ['admin']})
       expect(rc.getParentRolesSet('foo')).not.to.equal(rc.getParentRolesSet('foo'))
     })
+    it('does not return the role being queried when that role is in alwaysAllow', () => {
+      const rc = new RolesCalc({alwaysAllow: ['admin']})
+      expect(rc.getParentRolesSet('admin')).to.deep.equal(new Set())
+    })
   })
   describe('getRoleAndParentRolesSet', () => {
     it('includes the queried role', () => {
@@ -124,14 +128,12 @@ describe('RolesCalc', () => {
 
       it('super evil challenge', () => {
         const rc = new RolesCalc({alwaysAllow: 'admin', resourceActionSeparator: sep})
-        rc.role('blah').extends('admin')
         rc.role(`foo${sep}read`).extends(`bar${sep}read`)
         rc.role(`bar${sep}read`).extends(`baz${sep}write`)
         rc.role(`baz${sep}read`).extends('qux')
         rc.role('qux').extends('glorm')
         rc.role(`glorm${sep}write`).extends('flok')
         expect(rc.isAuthorized({required: 'flok', actual: 'admin'})).to.equal(true)
-        expect(rc.isAuthorized({required: 'flok', actual: 'blah'})).to.equal(true)
       })
 
       it('accepts properly configured global admin permissions', () => {
@@ -214,6 +216,10 @@ describe('RolesCalc', () => {
         it('prunes redundant roles based on resource > resource:action inheritance', () => {
           const rc = new RolesCalc({resourceActionSeparator: sep})
           expect(rc.pruneRedundantRoles([`foo${sep}read`, `foo${sep}write`, `foo${sep}burn`, 'foo', 'baker'])).to.deep.equal(['foo', 'baker'])
+        })
+        it('prunes roles that are redundant based on "always allow" declarations', () => {
+          const rc = new RolesCalc({resourceActionSeparator: sep, alwaysAllow: 'admin'})
+          expect(rc.pruneRedundantRoles(['employee', 'admin'])).to.deep.equal(['admin'])
         })
       })
 
