@@ -10,7 +10,8 @@ type RoleModifier = {
 export const INHERITANCE_DEPTH_LIMIT = 20
 
 export default class RolesCalc {
-
+  _resourceActionRegex: RegExp
+  _resourceActionSeparator: string
   _alwaysAllow: Set<string>
   _writeExtendsRead: boolean // defaults to true
 
@@ -19,10 +20,20 @@ export default class RolesCalc {
 
   _childRolesToParentRolesFlattened: Map<string, Set<string>> = new Map()
 
-  constructor(opts: {alwaysAllow?: ?string | ?Array<string>, writeExtendsRead?: ?boolean} = {}) {
-    const {alwaysAllow, writeExtendsRead} = opts
+  constructor(opts: {
+    alwaysAllow?: ?string | ?Array<string>,
+    writeExtendsRead?: ?boolean,
+    resourceActionSeparator?: ?string,
+  } = {}) {
+    const {alwaysAllow, writeExtendsRead, resourceActionSeparator} = opts
+    if (resourceActionSeparator != null && resourceActionSeparator.length !== 1) {
+      throw new Error('resourceActionSeparator must be a single character')
+    }
     this._alwaysAllow = new Set(toArray(alwaysAllow || []))
     this._writeExtendsRead = writeExtendsRead == null ? true : !!writeExtendsRead // default to true
+    this._resourceActionSeparator = resourceActionSeparator || ':'
+    const sep = this._resourceActionSeparator
+    this._resourceActionRegex = new RegExp(`^([^${sep}]+)${sep}([^${sep}]+)$`)
   }
 
   role(parentRoles: string | Array<string>): RoleModifier {
@@ -107,7 +118,7 @@ export default class RolesCalc {
   }
 
   _calcParentRolesSet(role: string): Set<string> {
-    const {action} = toResourceAndAction(role)
+    const {action} = this._toResourceAndAction(role)
     let addedRoles: Array<string> = [role]
     const roles: Set<string> = new Set(this._alwaysAllow)
 
@@ -134,10 +145,10 @@ export default class RolesCalc {
         if (userConfiguredParentRoles) {
           userConfiguredParentRoles.forEach((parentRole: string) => {
             addIfNotPresent(parentRole)
-            if (action && !toResourceAndAction(parentRole).action) {
+            if (action && !this._toResourceAndAction(parentRole).action) {
               // This is a parent > child relationship, and we're looking for a child:action
               // permission. In this case, parent:action > child:action
-              addIfNotPresent(`${parentRole}:${action}`)
+              addIfNotPresent(`${parentRole}${this._resourceActionSeparator}${action}`)
             }
           })
         }
@@ -162,21 +173,21 @@ export default class RolesCalc {
    */
   _explodeResourceActionRole(role: string): Array<string> {
     const result = []
-    const {resource, action} = toResourceAndAction(role)
+    const {resource, action} = this._toResourceAndAction(role)
     if (resource && action) {
       result.push(resource)
       if (this._writeExtendsRead && 'read' === action)
-        result.push(`${resource}:write`)
+        result.push(`${resource}${this._resourceActionSeparator}write`)
     }
     return result
   }
-}
 
-function toResourceAndAction(role: string): {resource: ?string, action: ?string} {
-  const match = role.match(/^([^:]+):([^:]+)$/)
-  return {
-    resource: match ? match[1] : null,
-    action: match ? match[2] : null
+  _toResourceAndAction(role: string): {resource: ?string, action: ?string} {
+    const match = role.match(this._resourceActionRegex)
+    return {
+      resource: match ? match[1] : null,
+      action: match ? match[2] : null
+    }
   }
 }
 
