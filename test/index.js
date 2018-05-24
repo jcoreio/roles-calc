@@ -2,8 +2,26 @@
 
 import {describe, it} from 'mocha'
 import {expect} from 'chai'
-import RolesCalc, {INHERITANCE_DEPTH_LIMIT} from '../src/RolesCalc'
+import RolesCalc, {rolesToObject, INHERITANCE_DEPTH_LIMIT} from '../src/RolesCalc'
 
+describe('rolesToObject', () => {
+  it('throws for falsy values', () => {
+    expect(() => rolesToObject('')).to.throw(Error)
+    expect(() => rolesToObject(0)).to.throw(Error)
+  })
+  it('handles string', () => {
+    expect(rolesToObject('role')).to.deep.equal({role: true})
+  })
+  it('handles array', () => {
+    expect(rolesToObject(['foo', 'bar'])).to.deep.equal({foo: true, bar: true})
+  })
+  it('handles Set', () => {
+    expect(rolesToObject(new Set(['foo', 'bar']))).to.deep.equal({foo: true, bar: true})
+  })
+  it('handles Object', () => {
+    expect(rolesToObject({foo: true, bar: true, baz: false})).to.deep.equal({foo: true, bar: true})
+  })
+})
 describe('RolesCalc', () => {
   it("throws an error if resourceActionSeparator is not of length 1", () => {
     expect(() => new RolesCalc({resourceActionSeparator: ''})).to.throw(Error)
@@ -21,6 +39,10 @@ describe('RolesCalc', () => {
     it('does not return the role being queried when that role is in alwaysAllow', () => {
       const rc = new RolesCalc({alwaysAllow: ['admin']})
       expect(rc.getParentRolesSet('admin')).to.deep.equal(new Set())
+    })
+    it('includes parents of a resource role', () => {
+      const rc = new RolesCalc()
+      expect(rc.getParentRolesSet('foo:read')).to.deep.equal(new Set(['foo', 'foo:write']))
     })
   })
   describe('getRoleAndParentRolesSet', () => {
@@ -89,6 +111,12 @@ describe('RolesCalc', () => {
       it('accepts a read permission extended by a write permission', () => {
         const rc = new RolesCalc({resourceActionSeparator: sep})
         expect(rc.isAuthorized({required: `foo${sep}read`, actual: `foo${sep}write`})).to.equal(true)
+      })
+
+      it('accepts a read permission implied by a write permission on a parent resource', () => {
+        const rc = new RolesCalc({resourceActionSeparator: sep})
+        rc.role('parent').extends('child')
+        expect(rc.isAuthorized({required: `child${sep}read`, actual: `parent${sep}write`})).to.equal(true)
       })
 
       it('obeys a writeExtendsRead:false setting', () => {
@@ -205,11 +233,24 @@ describe('RolesCalc', () => {
           const rc = new RolesCalc({resourceActionSeparator: sep})
           expect(rc.pruneRedundantRoles(['foo', 'bar'])).to.deep.equal(['foo', 'bar'])
         })
+        it('does not change non-redundant roles for Set', () => {
+          const rc = new RolesCalc({resourceActionSeparator: sep})
+          expect(rc.pruneRedundantRoles(new Set(['foo', 'bar']))).to.deep.equal(['foo', 'bar'])
+        })
+        it('does not change non-redundant roles for Object', () => {
+          const rc = new RolesCalc({resourceActionSeparator: sep})
+          expect(rc.pruneRedundantRoles({foo: true, bar: true})).to.deep.equal(['foo', 'bar'])
+        })
         it('prunes redundant roles based on defined inheritance', () => {
           const rc = new RolesCalc({resourceActionSeparator: sep})
           rc.role('owner').extends('manager')
           rc.role('manager').extends('employee')
           expect(rc.pruneRedundantRoles(['employee', 'manager', 'owner', 'baker'])).to.deep.equal(['owner', 'baker'])
+        })
+        it('prunes redundant roles based on a parent:write > child:read relationship', () => {
+          const rc = new RolesCalc({resourceActionSeparator: sep})
+          rc.role('parent').extends('child')
+          expect(rc.pruneRedundantRoles([`parent${sep}write`, `child${sep}read`])).to.deep.equal([`parent${sep}write`])
         })
         it('prunes redundant roles based on resource:write > resource:read inheritance', () => {
           const rc = new RolesCalc({resourceActionSeparator: sep})
@@ -228,23 +269,23 @@ describe('RolesCalc', () => {
       describe('explodeResourceActionRole', () => {
         it(`explodes resource${sep}action roles that are extended by other roles`, () => {
           const rc = new RolesCalc({resourceActionSeparator: sep})
-          expect(rc._explodeResourceActionRole(`foo${sep}bar`)).to.deep.equal(['foo'])
+          expect(Array.from(rc._explodeResourceActionRole(`foo${sep}bar`))).to.deep.equal(['foo'])
         })
 
         it(`explodes resource${sep}read role into resource${sep}write role when write extends read`, () => {
           const rc = new RolesCalc({resourceActionSeparator: sep})
-          expect(rc._explodeResourceActionRole(`foo${sep}read`)).to.deep.equal(['foo', `foo${sep}write`])
+          expect(Array.from(rc._explodeResourceActionRole(`foo${sep}read`))).to.deep.equal(['foo', `foo${sep}write`])
         })
 
         it(`does not explode resource${sep}read role into resource${sep}write roles when write does not extend read`, () => {
           const rc = new RolesCalc({resourceActionSeparator: sep, writeExtendsRead: false})
-          expect(rc._explodeResourceActionRole(`foo${sep}read`)).to.deep.equal(['foo'])
+          expect(Array.from(rc._explodeResourceActionRole(`foo${sep}read`))).to.deep.equal(['foo'])
         })
 
         it('does not explode roles that do not follow the resource:action pattern', () => {
           const rc = new RolesCalc({resourceActionSeparator: sep})
           for (let pattern of [`${sep}foo`, sep, 'baz', `${sep}foo${sep}bar`, `foo${sep}bar${sep}`, `foo${sep}bar${sep}baz`]) {
-            expect(rc._explodeResourceActionRole(pattern)).to.deep.equal([])
+            expect(Array.from(rc._explodeResourceActionRole(pattern))).to.deep.equal([])
           }
         })
       })
