@@ -13,6 +13,18 @@ describe('RolesCalc', () => {
     const rc = new RolesCalc()
     expect(rc.isAuthorized({required: `foo:read`, actual: `foo:write`})).to.equal(true)
   })
+  describe('getParentRolesSet', () => {
+    it('always returns a new set', () => {
+      const rc = new RolesCalc({alwaysAllow: ['admin']})
+      expect(rc.getParentRolesSet('foo')).not.to.equal(rc.getParentRolesSet('foo'))
+    })
+  })
+  describe('getRoleAndParentRolesSet', () => {
+    it('includes the queried role', () => {
+      const rc = new RolesCalc({alwaysAllow: ['admin']})
+      expect(rc.getRoleAndParentRolesSet('foo').has('foo')).to.be.true
+    })
+  })
   function testForSeparator(sep: string) {
     describe(`with separator: ${sep}`, () => {
       it('accepts a role directly matched', () => {
@@ -33,12 +45,6 @@ describe('RolesCalc', () => {
       it('rejects a role not matched from an array', () => {
         const rc = new RolesCalc({resourceActionSeparator: sep})
         expect(rc.isAuthorized({required: 'foo', actual: ['bar', 'baz']})).to.equal(false)
-      })
-
-      it('accepts a directly extended role', () => {
-        const rc = new RolesCalc({resourceActionSeparator: sep})
-        rc.role('supervisor').extends('employee')
-        expect(rc.isAuthorized({required: 'employee', actual: 'supervisor'})).to.equal(true)
       })
 
       it('accepts a directly extended role', () => {
@@ -166,13 +172,6 @@ describe('RolesCalc', () => {
         expect(rc.isAuthorized({required: 'manager', actual: 'supervisor'})).to.equal(true)
       })
 
-      it('allows a role to be added redundantly', () => {
-        const rc = new RolesCalc({resourceActionSeparator: sep})
-        rc.role('supervisor').extends('manager')
-        rc.role('supervisor').extends('manager')
-        expect(rc.isAuthorized({required: 'manager', actual: 'supervisor'})).to.equal(true)
-      })
-
       it('handles inheritance trees with redundant paths to the same role', () => {
         const rc = new RolesCalc({resourceActionSeparator: sep})
         rc.role('owner').extends('manager')
@@ -240,19 +239,6 @@ describe('RolesCalc', () => {
             expect(rc._explodeResourceActionRole(pattern)).to.deep.equal([])
           }
         })
-      })
-    })
-
-    describe('getParentRolesSet', () => {
-      it('always returns a new set', () => {
-        const rc = new RolesCalc({alwaysAllow: ['admin']})
-        expect(rc.getParentRolesSet('foo')).not.to.equal(rc.getParentRolesSet('foo'))
-      })
-    })
-    describe('getRoleAndParentRolesSet', () => {
-      it('includes the queried role', () => {
-        const rc = new RolesCalc({alwaysAllow: ['admin']})
-        expect(rc.getRoleAndParentRolesSet('foo').has('foo')).to.be.true
       })
     })
   }
