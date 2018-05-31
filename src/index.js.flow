@@ -1,0 +1,12 @@
+// @flow
+
+import RolesCalc from './RolesCalc'
+import type {Roles} from './RolesCalc'
+export type {Roles}
+
+declare export default typeof RolesCalc
+declare export function rolesToSet<Role: string>(roles: Roles<Role>): Set<Role>
+declare export function rolesToObject<Role: string>(roles: Roles<Role>): {[role: Role]: boolean}
+declare export function rolesToIterable<Role: string>(roles: Roles<Role>): Iterable<Role>
+
+

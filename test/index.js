@@ -2,7 +2,8 @@
 
 import {describe, it} from 'mocha'
 import {expect} from 'chai'
-import RolesCalc, {rolesToObject, INHERITANCE_DEPTH_LIMIT} from '../src/RolesCalc'
+import RolesCalc, {rolesToObject} from '../src'
+import {INHERITANCE_DEPTH_LIMIT} from '../src/RolesCalc'
 
 describe('rolesToObject', () => {
   it('throws for falsy values', () => {

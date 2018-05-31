@@ -40,6 +40,10 @@ export default class RolesCalc<Role: string> {
 
   _childRolesToParentRolesFlattened: Map<Role, Set<Role>> = new Map()
 
+  static rolesToSet = rolesToSet
+  static rolesToObject = rolesToObject
+  static rolesToIterable = rolesToIterable
+
   constructor(opts: {
     alwaysAllow?: ?Roles<Role>,
     writeExtendsRead?: ?boolean,
