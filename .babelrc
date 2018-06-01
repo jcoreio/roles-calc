@@ -28,7 +28,8 @@
         "stage-1", "flow"
       ],
       "plugins": [
-        "transform-runtime"
+        "transform-runtime",
+        "add-module-exports"
       ]
     },
   }

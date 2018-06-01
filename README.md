@@ -1,36 +1,85 @@
-# es2015-library-skeleton
+# roles-calc
 
-[![Build Status](https://travis-ci.org/jedwards1211/es2015-library-skeleton.svg?branch=master)](https://travis-ci.org/jedwards1211/es2015-library-skeleton)
-[![Coverage Status](https://codecov.io/gh/jedwards1211/es2015-library-skeleton/branch/master/graph/badge.svg)](https://codecov.io/gh/jedwards1211/es2015-library-skeleton)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
+Resolves whether a user can perform an action based on hierarchical roles
 
-This is my personal skeleton for creating an ES2015 library npm package.  You are welcome to use it.
-
-## Quick start
+## Installation
 
 ```sh
-npm i -g howardroark/pollinate
-pollinate https://github.com/jedwards1211/es2015-library-skeleton.git --keep-history --name <package name> --author <your name> --organization <github organization> --description <package description>
-cd <package name>
-npm i
+yarn add @jcoreio/roles-calc
+```
+or
+```sh
+npm install --save @jcoreio/roles-calc
 ```
 
-## Tools used
+## Usage
 
-* babel 6
-* babel-preset-env
-* mocha
-* chai
-* istanbul
-* nyc
-* babel-plugin-istanbul
-* eslint
-* eslint-watch
-* flow
-* flow-watch
-* pre-commit (runs eslnt and flow)
-* semantic-release
-* Travis CI
-* Coveralls
+#### Calculate basic roles
 
+```js
+const RolesCalc = require('@jcoreio/roles-calc')
+
+const rc = new RolesCalc()
+
+rc.isAuthorized({required: 'employee', actual: ['employee', 'manager']}) // true
+rc.isAuthorized({required: 'owner', actual: ['employee', 'manager']}) // false
+rc.isAuthorized({required: 'owner', actual: 'owner'}) // true, 'actual' can be a string or array
+```
+
+#### Calculate roles with simple inheritance
+
+```js
+const rc = new RolesCalc()
+rc.role('owner').extends(['manager', 'employee'])
+
+rc.isAuthorized({required: 'employee', actual: 'owner'}) // true, owner > employee
+rc.isAuthorized({required: 'manager', actual: 'owner'}) // true, owner > manager
+rc.isAuthorized({required: 'owner', actual: 'manager'}) // false, manager < owner
+```
+
+#### Calculate roles with multi level inheritance
+
+```js
+const rc = new RolesCalc()
+rc.role('manager').extends('employee')
+rc.role('owner').extends('manager')
+
+rc.isAuthorized({required: 'employee', actual: 'owner'}) // true, owner > manager > employee
+rc.isAuthorized({required: 'employee', actual: 'manager'}) // true, manager > employee
+rc.isAuthorized({required: 'owner', actual: 'manager'}) // false, manager < owner
+```
+
+#### Always allow 'admin' or similar permissions
+
+```js
+const rc = new RolesCalc({alwaysAllow: 'admin'})
+
+rc.isAuthorized({required: 'employee', actual: 'admin'}) // true, admin is always authorized
+rc.isAuthorized({required: 'employee', actual: 'owner'}) // false, owner wasn't included in alwaysAllow
+```
+
+```js
+const rc = new RolesCalc({alwaysAllow: ['admin', 'owner']})
+
+rc.isAuthorized({required: 'employee', actual: 'admin'}) // true, admin is always authorized
+rc.isAuthorized({required: 'employee', actual: 'owner'}) // true, owner is always authorized
+```
+
+#### `resource:write` permissions extend `resource:read` permissions by default
+
+```js
+const rc = new RolesCalc()
+
+rc.isAuthorized({required: 'site:read', actual: 'site:write'}) // true, resource:write > resource:read
+rc.isAuthorized({required: 'site:explode', actual: 'site:write'}) // false, resource:write does not extend unrelated actions by default
+rc.isAuthorized({required: 'site:explode', actual: 'site'}) // true, a general 'resource' role extends all 'resource:action' roles
+```
+
+#### Disabling inheritance of `resource:read` by `resource:write`
+
+```js
+const rc = new RolesCalc({writeExtendsRead: false})
+
+rc.isAuthorized({required: 'site:read', actual: 'site:write'}) // false when write does not extend read
+rc.isAuthorized({required: 'site:explode', actual: 'site'}) // true, a general 'resource' role extends all 'resource:action' roles, even when 'resource:write' does not extend 'resource:read'
+```

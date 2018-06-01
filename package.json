@@ -1,8 +1,8 @@
 {
-  "name": "es2015-library-skeleton",
+  "name": "@jcoreio/roles-calc",
   "version": "0.0.0-development",
-  "description": "my personal ES2015 library project skeleton",
-  "main": "lib/index.js",
+  "description": "Resolves whether a user can perform an action based on hierarchical roles",
+  "main": "es5.js",
   "module": "es/index.js",
   "sideEffects": false,
   "scripts": {
@@ -42,17 +42,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jedwards1211/es2015-library-skeleton.git"
+    "url": "https://github.com/jcoreio/roles-calc.git"
   },
   "keywords": [
-    "es2015"
+    "roles"
   ],
-  "author": "Andy Edwards",
-  "license": "MIT",
+  "author": "Jason McLaurin",
+  "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/jedwards1211/es2015-library-skeleton/issues"
+    "url": "https://github.com/jcoreio/roles-calc/issues"
   },
-  "homepage": "https://github.com/jedwards1211/es2015-library-skeleton#readme",
+  "homepage": "https://github.com/jcoreio/roles-calc#readme",
   "devDependencies": {
     "@commitlint/cli": "^6.0.2",
     "@commitlint/config-conventional": "^6.0.2",
@@ -62,6 +62,7 @@
     "babel-cli": "^6.23.0",
     "babel-core": "^6.23.1",
     "babel-eslint": "^7.1.1",
+    "babel-plugin-add-module-exports": "^0.2.1",
     "babel-plugin-istanbul": "^4.0.0",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",

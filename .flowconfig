@@ -1,4 +1,5 @@
 [ignore]
+<PROJECT_ROOT>/es5.js.flow
 <PROJECT_ROOT>/lib/.*
 <PROJECT_ROOT>/es/.*
 
