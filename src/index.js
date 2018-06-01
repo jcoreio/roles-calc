@@ -142,7 +142,8 @@ export default class RolesCalc<Role: string> {
   _calcParentRolesSet(role: Role): Set<Role> {
     const {action} = this._toResourceAndAction(role)
 
-    const roles: Set<Role> = new Set([role, ...this._alwaysAllow])
+    const roles: Set<Role> = new Set(this._alwaysAllow)
+    roles.add(role)
     let addedRoles: Set<Role> = new Set(roles)
 
     let sanityCount = INHERITANCE_DEPTH_LIMIT + 1
