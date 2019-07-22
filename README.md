@@ -83,3 +83,14 @@ const rc = new RolesCalc({writeExtendsRead: false})
 rc.isAuthorized({required: 'site:read', actual: 'site:write'}) // false when write does not extend read
 rc.isAuthorized({required: 'site:explode', actual: 'site'}) // true, a general 'resource' role extends all 'resource:action' roles, even when 'resource:write' does not extend 'resource:read'
 ```
+
+#### Get set of all parent roles
+
+```js
+const rc = new RolesCalc()
+rc.role('manager').extends('employee')
+rc.role('owner').extends('manager')
+
+rc.getParentRolesSet('employee') // 'owner', 'manager'
+rc.getRoleAndParentRolesSet('employee') // 'owner', 'manager', 'employee'
+```
