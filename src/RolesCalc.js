@@ -15,6 +15,8 @@ export default class RolesCalc {
   _alwaysAllow: Set<string>
   _writeExtendsRead: boolean // defaults to true
 
+  _readWriteResourceNames: Set<string> = new Set()
+
   /** relationships, as defined by the user */
   _childRolesToParentRoles: Map<string, Set<string>> = new Map()
 
@@ -36,25 +38,33 @@ export default class RolesCalc {
     this._resourceActionRegex = new RegExp(`^([^${sep}]+)${sep}([^${sep}]+)$`)
   }
 
-  role(parentRoles: string | Array<string>): RoleModifier {
-    return {
-      extends: (...childRoles: Array<string | Array<string>>) => {
-        const childRolesFlat = flatten(childRoles)
-        for (let parentRole of toArray(parentRoles)) {
-          for (let childRole of childRolesFlat) {
-            let parentRolesForChildRole: ?Set<string> = this._childRolesToParentRoles.get(childRole)
-            if (!parentRolesForChildRole) {
-              parentRolesForChildRole = new Set()
-              this._childRolesToParentRoles.set(childRole, parentRolesForChildRole)
-            }
-            if (!parentRolesForChildRole.has(parentRole)) {
-              parentRolesForChildRole.add(parentRole)
-              this._childRolesToParentRolesFlattened.clear()
-            }
+  _buildChainedFunctions = (parentRoles: Array<string>) => ({
+    extends: (...childRoles: Array<string | Array<string>>) => {
+      const childRolesFlat = flatten(childRoles)
+      for (let parentRole of toArray(parentRoles)) {
+        for (let childRole of childRolesFlat) {
+          let parentRolesForChildRole: ?Set<string> = this._childRolesToParentRoles.get(childRole)
+          if (!parentRolesForChildRole) {
+            parentRolesForChildRole = new Set()
+            this._childRolesToParentRoles.set(childRole, parentRolesForChildRole)
+          }
+          if (!parentRolesForChildRole.has(parentRole)) {
+            parentRolesForChildRole.add(parentRole)
+            this._childRolesToParentRolesFlattened.clear()
           }
         }
       }
     }
+  })
+
+  role(parentRoles: string | Array<string>): RoleModifier {
+    return this._buildChainedFunctions(toArray(parentRoles))
+  }
+
+  readWriteResource(parentResources: string | Array<string>): RoleModifier {
+    const parentResourcesArr = toArray(parentResources)
+    parentResourcesArr.forEach(role => this._readWriteResourceNames.add(role))
+    return this._buildChainedFunctions(parentResourcesArr)
   }
 
   isAuthorized(args: {required: string, actual: string | Array<string>}): boolean {
