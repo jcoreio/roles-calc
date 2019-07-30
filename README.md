@@ -65,23 +65,23 @@ rc.isAuthorized({required: 'employee', actual: 'admin'}) // true, admin is alway
 rc.isAuthorized({required: 'employee', actual: 'owner'}) // true, owner is always authorized
 ```
 
-#### `resource:write` permissions extend `resource:read` permissions by default
+#### `resource:action` roles
 
 ```js
-const rc = new RolesCalc()
+const rc = new RolesCalc({resourceActions: true})
+
+rc.isAuthorized({required: 'site:read', actual: 'site:write'}) // false writeExtendsRead option is not enabled 
+rc.isAuthorized({required: 'site:explode', actual: 'site'}) // true, a general 'resource' role extends all 'resource:action' roles
+```
+
+#### `writeExtendsRead` option for resources
+
+```js
+const rc = new RolesCalc({resourceActions: true, writeExtendsRead: true})
 
 rc.isAuthorized({required: 'site:read', actual: 'site:write'}) // true, resource:write > resource:read
 rc.isAuthorized({required: 'site:explode', actual: 'site:write'}) // false, resource:write does not extend unrelated actions by default
 rc.isAuthorized({required: 'site:explode', actual: 'site'}) // true, a general 'resource' role extends all 'resource:action' roles
-```
-
-#### Disabling inheritance of `resource:read` by `resource:write`
-
-```js
-const rc = new RolesCalc({writeExtendsRead: false})
-
-rc.isAuthorized({required: 'site:read', actual: 'site:write'}) // false when write does not extend read
-rc.isAuthorized({required: 'site:explode', actual: 'site'}) // true, a general 'resource' role extends all 'resource:action' roles, even when 'resource:write' does not extend 'resource:read'
 ```
 
 #### Get set of all parent roles

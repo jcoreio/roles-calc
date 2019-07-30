@@ -30,10 +30,11 @@ export function rolesToObject<Role: string>(roles: Roles<Role>): {[role: Role]: 
 export const INHERITANCE_DEPTH_LIMIT = 20
 
 export default class RolesCalc<Role: string> {
+  _resourceActions: boolean // defaults to false
+  _writeExtendsRead: boolean // defaults to false
   _resourceActionRegex: RegExp
   _resourceActionSeparator: string
   _alwaysAllow: Set<Role>
-  _writeExtendsRead: boolean // defaults to true
 
   /** relationships, as defined by the user */
   _childRolesToParentRoles: Map<Role, Set<Role>> = new Map()
@@ -46,17 +47,18 @@ export default class RolesCalc<Role: string> {
 
   constructor(opts: {
     alwaysAllow?: ?Roles<Role>,
+    resourceActions?: ?boolean,
     writeExtendsRead?: ?boolean,
     resourceActionSeparator?: ?string,
   } = {}) {
-    const {alwaysAllow, writeExtendsRead, resourceActionSeparator} = opts
+    const {alwaysAllow, resourceActions, writeExtendsRead, resourceActionSeparator} = opts
     if (resourceActionSeparator != null && resourceActionSeparator.length !== 1) {
       throw new Error('resourceActionSeparator must be a single character')
     }
     this._alwaysAllow = new rolesToSet(alwaysAllow || [])
-    this._writeExtendsRead = writeExtendsRead == null ? true : !!writeExtendsRead // default to true
-    this._resourceActionSeparator = resourceActionSeparator || ':'
-    const sep = this._resourceActionSeparator
+    this._resourceActions = !!resourceActions
+    this._writeExtendsRead = !!writeExtendsRead
+    const sep = this._resourceActionSeparator = resourceActionSeparator || ':'
     this._resourceActionRegex = new RegExp(`^([^${sep}]+)${sep}([^${sep}]+)$`)
   }
 
@@ -207,7 +209,7 @@ export default class RolesCalc<Role: string> {
   }
 
   _toResourceAndAction(role: Role): {resource: ?Role, action: ?Role} {
-    const match = role.match(this._resourceActionRegex)
+    const match = this._resourceActions ? role.match(this._resourceActionRegex) : null
     return {
       resource: match ? match[1] : null,
       action: match ? match[2] : null
