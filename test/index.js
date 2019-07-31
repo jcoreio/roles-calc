@@ -82,6 +82,13 @@ describe('RolesCalc', () => {
         expect(rc.isAuthorized({required: 'foo', actual: ['foo', 'bar']})).to.equal(true)
       })
 
+      it('accepts multiple required roles', () => {
+        const rc = new RolesCalc(rolesCalcOpts)
+        expect(rc.isAuthorized({required: ['foo', 'bar'], actual: ['foo', 'bar', 'baz']})).to.equal(true)
+        expect(rc.isAuthorized({required: ['foo', 'bar'], actual: ['foo', 'baz']})).to.equal(false)
+      })
+
+
       it('rejects a role not matched from an array', () => {
         const rc = new RolesCalc(rolesCalcOpts)
         expect(rc.isAuthorized({required: 'foo', actual: ['bar', 'baz']})).to.equal(false)

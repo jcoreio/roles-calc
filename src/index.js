@@ -84,7 +84,18 @@ export default class RolesCalc<Role: string> {
     }
   }
 
-  isAuthorized(args: {required: Role, actual: Roles<Role>}): boolean {
+  isAuthorized(args: {required: Roles<Role> | Role, actual: Roles<Role>}): boolean {
+    const {required, actual} = args
+    if (typeof required !== 'string') {
+      for (const role of rolesToIterable(required)) {
+        if (!this._isAuthorized({required: role, actual})) return false
+      }
+      return true
+    }
+    return this._isAuthorized({required, actual})
+  }
+
+  _isAuthorized(args: {required: Role, actual: Roles<Role>}): boolean {
     const {required, actual} = args
 
     // Look up a flattened set of roles that extend the required role
@@ -216,4 +227,3 @@ export default class RolesCalc<Role: string> {
     }
   }
 }
-
