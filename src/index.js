@@ -6,22 +6,42 @@ type RoleModifier<Role: string> = {
 
 export type Roles<Role: string> = $ReadOnlyArray<Role> | Set<Role> | $ReadOnly<{[role: Role]: boolean}> | Role
 
-export function rolesToSet<Role: string>(roles: Roles<Role>): Set<Role> {
-  if (roles instanceof Set) return roles
-  return new Set(rolesToIterable(roles))
+export function * rolesToIterable<Role: string>(...args: Array<Roles<Role>>): Iterable<Role> {
+  if (!args.length) throw new Error('at least one argument must be provided')
+  for (const roles of args) {
+    if (roles instanceof Set || Array.isArray(roles)) yield * roles
+    else if (typeof roles === 'string') yield roles
+    else if (roles instanceof Object) {
+      const finalRoles = roles
+      for (const key in finalRoles) {
+        const role: Role = (key: any)
+        if (finalRoles.hasOwnProperty(role) && finalRoles[role]) yield role
+      }
+    } else {
+      throw new Error(`invalid argument: ${String(roles)}`)
+    }
+  }
 }
 
-export function rolesToIterable<Role: string>(roles: Roles<Role>): Iterable<Role> {
-  if (!roles) throw new Error('roles must be truthy')
-  if (roles instanceof Set || Array.isArray(roles)) return roles
-  if (typeof roles === 'string') return [roles]
-  const finalRoles = roles
-  return Object.keys(roles).filter(role => finalRoles[role])
+export function rolesToSet<Role: string>(...args: Array<Roles<Role>>): Set<Role> {
+  if (args.length === 1 && args[0] instanceof Set) return args[0]
+  return new Set(rolesToIterable(...args))
 }
 
-export function rolesToObject<Role: string>(roles: Roles<Role>): {[role: Role]: boolean} {
+export function rolesToArray<Role: string>(...args: Array<Roles<Role>>): $ReadOnlyArray<Role> {
+  if (args.length === 1 && Array.isArray(args[0])) return args[0]
+  return [...rolesToIterable(...args)]
+}
+
+export function rolesToObject<Role: string>(...args: Array<Roles<Role>>): {[role: Role]: boolean} {
+  if (args.length === 1 &&
+    !Array.isArray(args[0]) &&
+    !(args[0] instanceof Set) &&
+    args[0] instanceof Object) {
+    return args[0]
+  }
   const result = {}
-  for (let role of rolesToIterable(roles)) {
+  for (const role of rolesToIterable(...args)) {
     result[role] = true
   }
   return result
@@ -84,7 +104,7 @@ export default class RolesCalc<Role: string> {
     }
   }
 
-  isAuthorized(args: {required: Roles<Role> | Role, actual: Roles<Role>}): boolean {
+  isAuthorized(args: {required: Roles<Role>, actual: Roles<Role>}): boolean {
     const {required, actual} = args
     if (typeof required !== 'string') {
       for (const role of rolesToIterable(required)) {

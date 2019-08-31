@@ -14,6 +14,20 @@ npm install --save @jcoreio/roles-calc
 
 ## Usage
 
+A collection of roles can be specified in one of four ways:
+* An `Array` of role names
+* A `Set` of role names
+* An `Object` where the key is the role name and the value is `true` iff the user has the role
+* A single role name (`string`)
+
+`@jcoreio/roles-calc` exports `rolesToArray`, `rolesToSet`, `rolesToObject`,
+and `rolesToIterable` for converting between these forms.
+
+```js
+rolesToArray({employee: true, manager: true, owner: false}) // ['employee', 'manager']
+rolesToObject(new Set(['employee', 'manager'])) // {employee: true, manager: true}
+```
+
 #### Calculate basic roles
 
 ```js
@@ -70,7 +84,7 @@ rc.isAuthorized({required: 'employee', actual: 'owner'}) // true, owner is alway
 ```js
 const rc = new RolesCalc({resourceActions: true})
 
-rc.isAuthorized({required: 'site:read', actual: 'site:write'}) // false writeExtendsRead option is not enabled 
+rc.isAuthorized({required: 'site:read', actual: 'site:write'}) // false writeExtendsRead option is not enabled
 rc.isAuthorized({required: 'site:explode', actual: 'site'}) // true, a general 'resource' role extends all 'resource:action' roles
 ```
 
@@ -93,4 +107,15 @@ rc.role('owner').extends('manager')
 
 rc.getParentRolesSet('employee') // 'owner', 'manager'
 rc.getRoleAndParentRolesSet('employee') // 'owner', 'manager', 'employee'
+```
+
+#### Prune redundant roles
+
+```js
+const rc = new RolesCalc()
+rc.role('manager').extends('employee')
+rc.role('owner').extends('manager')
+
+rc.pruneRedundantRolesSet(['manager', 'employee']) // new Set(['manager'])
+rc.pruneRedundantRoles(['owner', 'manager', 'employee']) // ['owner']
 ```

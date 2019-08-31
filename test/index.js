@@ -6,7 +6,6 @@ import RolesCalc, {rolesToObject, INHERITANCE_DEPTH_LIMIT} from '../src'
 
 describe('rolesToObject', () => {
   it('throws for falsy values', () => {
-    expect(() => rolesToObject('')).to.throw(Error)
     expect(() => rolesToObject(0)).to.throw(Error)
   })
   it('handles string', () => {
@@ -18,8 +17,11 @@ describe('rolesToObject', () => {
   it('handles Set', () => {
     expect(rolesToObject(new Set(['foo', 'bar']))).to.deep.equal({foo: true, bar: true})
   })
+  it('merges mix of things', () => {
+    expect(rolesToObject(new Set(['foo', 'bar']), 'bar', {'baz': true, glab: false}, ['foo', 'qux'])).to.deep.equal({foo: true, bar: true, baz: true, qux: true})
+  })
   it('handles Object', () => {
-    expect(rolesToObject({foo: true, bar: true, baz: false})).to.deep.equal({foo: true, bar: true})
+    expect(rolesToObject({foo: true, bar: true, baz: false})).to.deep.equal({foo: true, bar: true, baz: false})
   })
 })
 describe('RolesCalc', () => {
