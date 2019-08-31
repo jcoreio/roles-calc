@@ -62,6 +62,7 @@ export default class RolesCalc<Role: string> {
   _childRolesToParentRolesFlattened: Map<Role, Set<Role>> = new Map()
 
   static rolesToSet = rolesToSet
+  static rolesToArray = rolesToArray
   static rolesToObject = rolesToObject
   static rolesToIterable = rolesToIterable
 
