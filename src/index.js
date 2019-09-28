@@ -11,7 +11,7 @@ export function * rolesToIterable<Role: string>(...args: Array<Roles<Role>>): It
   for (const roles of args) {
     if (roles instanceof Set || Array.isArray(roles)) yield * roles
     else if (typeof roles === 'string') yield roles
-    else if (roles instanceof Object) {
+    else if (typeof roles === 'object' && roles != null) {
       const finalRoles = roles
       for (const key in finalRoles) {
         const role: Role = (key: any)
@@ -33,11 +33,12 @@ export function rolesToArray<Role: string>(...args: Array<Roles<Role>>): $ReadOn
   return [...rolesToIterable(...args)]
 }
 
-export function rolesToObject<Role: string>(...args: Array<Roles<Role>>): {[role: Role]: boolean} {
+export function rolesToObject<Role: string>(...args: Array<Roles<Role>>): $ReadOnly<{[role: Role]: boolean}> {
   if (args.length === 1 &&
     !Array.isArray(args[0]) &&
     !(args[0] instanceof Set) &&
-    args[0] instanceof Object) {
+    typeof args[0] === 'object' &&
+    args[0] != null) {
     return args[0]
   }
   const result = {}
