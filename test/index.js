@@ -291,22 +291,22 @@ describe('RolesCalc', () => {
 
       describe('explodeResourceActionRole', () => {
         it(`explodes resource${sep}action roles that are extended by other roles`, () => {
-          const rc = new RolesCalc(rolesCalcOpts)
-          expect(Array.from(rc._explodeResourceActionRole(`foo${sep}bar`))).to.deep.equal(['foo'])
+          const rc: RolesCalc<string> = new RolesCalc(rolesCalcOpts)
+          expect(Array.from(rc._explodeResourceActionRole((`foo${sep}bar`: any)))).to.deep.equal(['foo'])
         })
 
         it(`explodes resource${sep}read role into resource${sep}write role when write extends read`, () => {
-          const rc = new RolesCalc(rolesCalcOpts)
-          expect(Array.from(rc._explodeResourceActionRole(`foo${sep}read`))).to.deep.equal(['foo', `foo${sep}write`])
+          const rc: RolesCalc<string> = new RolesCalc(rolesCalcOpts)
+          expect(Array.from(rc._explodeResourceActionRole((`foo${sep}read`: any)))).to.deep.equal(['foo', `foo${sep}write`])
         })
 
         it(`does not explode resource${sep}read role into resource${sep}write roles when write does not extend read`, () => {
-          const rc = new RolesCalc({...rolesCalcOpts, writeExtendsRead: false})
-          expect(Array.from(rc._explodeResourceActionRole(`foo${sep}read`))).to.deep.equal(['foo'])
+          const rc: RolesCalc<string> = new RolesCalc({...rolesCalcOpts, writeExtendsRead: false})
+          expect(Array.from(rc._explodeResourceActionRole((`foo${sep}read`: any)))).to.deep.equal(['foo'])
         })
 
         it('does not explode roles that do not follow the resource:action pattern', () => {
-          const rc = new RolesCalc(rolesCalcOpts)
+          const rc: RolesCalc<string> = new RolesCalc(rolesCalcOpts)
           for (let pattern of [`${sep}foo`, sep, 'baz', `${sep}foo${sep}bar`, `foo${sep}bar${sep}`, `foo${sep}bar${sep}baz`]) {
             expect(Array.from(rc._explodeResourceActionRole(pattern))).to.deep.equal([])
           }

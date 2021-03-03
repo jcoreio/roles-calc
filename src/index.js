@@ -4,7 +4,9 @@ type RoleModifier<Role: string> = {
   extends: (...childRoles: Array<Roles<Role>>) => void,
 }
 
-export type Roles<Role: string> = $ReadOnlyArray<Role> | Set<Role> | $ReadOnly<{[role: Role]: boolean}> | Role
+type RolesObject<Role: string> = $ReadOnly<{[role: Role]: boolean | void}>
+
+export type Roles<Role: string> = $ReadOnlyArray<Role> | Set<Role> | RolesObject<Role> | Role
 
 export function * rolesToIterable<Role: string>(...args: Array<Roles<Role>>): Iterable<Role> {
   if (!args.length) throw new Error('at least one argument must be provided')
@@ -33,7 +35,7 @@ export function rolesToArray<Role: string>(...args: Array<Roles<Role>>): $ReadOn
   return [...rolesToIterable(...args)]
 }
 
-export function rolesToObject<Role: string>(...args: Array<Roles<Role>>): $ReadOnly<{[role: Role]: boolean}> {
+export function rolesToObject<Role: string>(...args: Array<Roles<Role>>): RolesObject<Role> {
   if (args.length === 1 &&
     !Array.isArray(args[0]) &&
     !(args[0] instanceof Set) &&
@@ -62,10 +64,10 @@ export default class RolesCalc<Role: string> {
 
   _childRolesToParentRolesFlattened: Map<Role, Set<Role>> = new Map()
 
-  static rolesToSet = rolesToSet
-  static rolesToArray = rolesToArray
-  static rolesToObject = rolesToObject
-  static rolesToIterable = rolesToIterable
+  static rolesToSet: <Role: string>(...args: Array<Roles<Role>>) => Set<Role> = rolesToSet
+  static rolesToArray: <Role: string>(...args: Array<Roles<Role>>) => $ReadOnlyArray<Role> = rolesToArray
+  static rolesToObject: <Role: string>(...args: Array<Roles<Role>>) => RolesObject<Role> = rolesToObject
+  static rolesToIterable: <Role: string>(...args: Array<Roles<Role>>) => Iterable<Role> = rolesToIterable
 
   constructor(opts: {
     alwaysAllow?: ?Roles<Role>,
@@ -235,7 +237,7 @@ export default class RolesCalc<Role: string> {
     const {resource, action} = this._toResourceAndAction(role)
     if (resource && action) {
       result.add((resource: any))
-      if (this._writeExtendsRead && 'read' === action)
+      if (this._writeExtendsRead && 'read' === (action: any))
         result.add((`${resource}${this._resourceActionSeparator}write`: any))
     }
     return result
@@ -244,8 +246,8 @@ export default class RolesCalc<Role: string> {
   _toResourceAndAction(role: Role): {resource: ?Role, action: ?Role} {
     const match = this._resourceActions ? role.match(this._resourceActionRegex) : null
     return {
-      resource: match ? match[1] : null,
-      action: match ? match[2] : null
+      resource: match ? (match[1]: any) : null,
+      action: match ? (match[2]: any) : null
     }
   }
 }
