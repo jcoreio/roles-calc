@@ -4,7 +4,9 @@ type RoleModifier<Role: string> = {
   extends: (...childRoles: Array<Roles<Role>>) => void,
 }
 
-type RolesObject<Role: string> = $ReadOnly<{ [role: Role]: boolean | void }>
+export type RolesObject<Role: string> = $ReadOnly<{
+  [role: Role]: boolean | void,
+}>
 
 export type Roles<Role: string> =
   | $ReadOnlyArray<Role>
