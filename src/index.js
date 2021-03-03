@@ -4,20 +4,30 @@ type RoleModifier<Role: string> = {
   extends: (...childRoles: Array<Roles<Role>>) => void,
 }
 
-type RolesObject<Role: string> = $ReadOnly<{[role: Role]: boolean | void}>
+type RolesObject<Role: string> = $ReadOnly<{ [role: Role]: boolean | void }>
 
-export type Roles<Role: string> = $ReadOnlyArray<Role> | Set<Role> | RolesObject<Role> | Role
+export type Roles<Role: string> =
+  | $ReadOnlyArray<Role>
+  | Set<Role>
+  | RolesObject<Role>
+  | Role
 
-export function * rolesToIterable<Role: string>(...args: Array<Roles<Role>>): Iterable<Role> {
+export function* rolesToIterable<Role: string>(
+  ...args: Array<Roles<Role>>
+): Iterable<Role> {
   if (!args.length) throw new Error('at least one argument must be provided')
   for (const roles of args) {
-    if (roles instanceof Set || Array.isArray(roles)) yield * roles
+    if (roles instanceof Set || Array.isArray(roles)) yield* roles
     else if (typeof roles === 'string') yield roles
     else if (typeof roles === 'object' && roles != null) {
       const finalRoles = roles
       for (const key in finalRoles) {
         const role: Role = (key: any)
-        if (finalRoles.hasOwnProperty(role) && finalRoles[role]) yield role
+        if (
+          Object.prototype.hasOwnProperty.call(finalRoles, role) &&
+          finalRoles[role]
+        )
+          yield role
       }
     } else {
       throw new Error(`invalid argument: ${String(roles)}`)
@@ -25,22 +35,30 @@ export function * rolesToIterable<Role: string>(...args: Array<Roles<Role>>): It
   }
 }
 
-export function rolesToSet<Role: string>(...args: Array<Roles<Role>>): Set<Role> {
+export function rolesToSet<Role: string>(
+  ...args: Array<Roles<Role>>
+): Set<Role> {
   if (args.length === 1 && args[0] instanceof Set) return args[0]
   return new Set(rolesToIterable(...args))
 }
 
-export function rolesToArray<Role: string>(...args: Array<Roles<Role>>): $ReadOnlyArray<Role> {
+export function rolesToArray<Role: string>(
+  ...args: Array<Roles<Role>>
+): $ReadOnlyArray<Role> {
   if (args.length === 1 && Array.isArray(args[0])) return args[0]
   return [...rolesToIterable(...args)]
 }
 
-export function rolesToObject<Role: string>(...args: Array<Roles<Role>>): RolesObject<Role> {
-  if (args.length === 1 &&
+export function rolesToObject<Role: string>(
+  ...args: Array<Roles<Role>>
+): RolesObject<Role> {
+  if (
+    args.length === 1 &&
     !Array.isArray(args[0]) &&
     !(args[0] instanceof Set) &&
     typeof args[0] === 'object' &&
-    args[0] != null) {
+    args[0] != null
+  ) {
     return args[0]
   }
   const result = {}
@@ -64,25 +82,43 @@ export default class RolesCalc<Role: string> {
 
   _childRolesToParentRolesFlattened: Map<Role, Set<Role>> = new Map()
 
-  static rolesToSet: <Role: string>(...args: Array<Roles<Role>>) => Set<Role> = rolesToSet
-  static rolesToArray: <Role: string>(...args: Array<Roles<Role>>) => $ReadOnlyArray<Role> = rolesToArray
-  static rolesToObject: <Role: string>(...args: Array<Roles<Role>>) => RolesObject<Role> = rolesToObject
-  static rolesToIterable: <Role: string>(...args: Array<Roles<Role>>) => Iterable<Role> = rolesToIterable
+  static rolesToSet: <Role: string>(
+    ...args: Array<Roles<Role>>
+  ) => Set<Role> = rolesToSet
+  static rolesToArray: <Role: string>(
+    ...args: Array<Roles<Role>>
+  ) => $ReadOnlyArray<Role> = rolesToArray
+  static rolesToObject: <Role: string>(
+    ...args: Array<Roles<Role>>
+  ) => RolesObject<Role> = rolesToObject
+  static rolesToIterable: <Role: string>(
+    ...args: Array<Roles<Role>>
+  ) => Iterable<Role> = rolesToIterable
 
-  constructor(opts: {
-    alwaysAllow?: ?Roles<Role>,
-    resourceActions?: ?boolean,
-    writeExtendsRead?: ?boolean,
-    resourceActionSeparator?: ?string,
-  } = {}) {
-    const {alwaysAllow, resourceActions, writeExtendsRead, resourceActionSeparator} = opts
-    if (resourceActionSeparator != null && resourceActionSeparator.length !== 1) {
+  constructor(
+    opts: {
+      alwaysAllow?: ?Roles<Role>,
+      resourceActions?: ?boolean,
+      writeExtendsRead?: ?boolean,
+      resourceActionSeparator?: ?string,
+    } = {}
+  ) {
+    const {
+      alwaysAllow,
+      resourceActions,
+      writeExtendsRead,
+      resourceActionSeparator,
+    } = opts
+    if (
+      resourceActionSeparator != null &&
+      resourceActionSeparator.length !== 1
+    ) {
       throw new Error('resourceActionSeparator must be a single character')
     }
     this._alwaysAllow = new rolesToSet(alwaysAllow || [])
     this._resourceActions = !!resourceActions
     this._writeExtendsRead = !!writeExtendsRead
-    const sep = this._resourceActionSeparator = resourceActionSeparator || ':'
+    const sep = (this._resourceActionSeparator = resourceActionSeparator || ':')
     this._resourceActionRegex = new RegExp(`^([^${sep}]+)${sep}([^${sep}]+)$`)
   }
 
@@ -92,10 +128,15 @@ export default class RolesCalc<Role: string> {
         for (let parentRole of rolesToIterable(parentRoles)) {
           for (let arg of childRoles) {
             for (let childRole of rolesToIterable(arg)) {
-              let parentRolesForChildRole: ?Set<Role> = this._childRolesToParentRoles.get(childRole)
+              let parentRolesForChildRole: ?Set<Role> = this._childRolesToParentRoles.get(
+                childRole
+              )
               if (!parentRolesForChildRole) {
                 parentRolesForChildRole = new Set()
-                this._childRolesToParentRoles.set(childRole, parentRolesForChildRole)
+                this._childRolesToParentRoles.set(
+                  childRole,
+                  parentRolesForChildRole
+                )
               }
               if (!parentRolesForChildRole.has(parentRole)) {
                 parentRolesForChildRole.add(parentRole)
@@ -104,29 +145,28 @@ export default class RolesCalc<Role: string> {
             }
           }
         }
-      }
+      },
     }
   }
 
-  isAuthorized(args: {required: Roles<Role>, actual: Roles<Role>}): boolean {
-    const {required, actual} = args
+  isAuthorized(args: { required: Roles<Role>, actual: Roles<Role> }): boolean {
+    const { required, actual } = args
     if (typeof required !== 'string') {
       for (const role of rolesToIterable(required)) {
-        if (!this._isAuthorized({required: role, actual})) return false
+        if (!this._isAuthorized({ required: role, actual })) return false
       }
       return true
     }
-    return this._isAuthorized({required, actual})
+    return this._isAuthorized({ required, actual })
   }
 
-  _isAuthorized(args: {required: Role, actual: Roles<Role>}): boolean {
-    const {required, actual} = args
+  _isAuthorized(args: { required: Role, actual: Roles<Role> }): boolean {
+    const { required, actual } = args
 
     // Look up a flattened set of roles that extend the required role
     const parentRoles: Set<Role> = this._getParentRolesSet(required)
     for (let actualRole of rolesToIterable(actual)) {
-      if (actualRole === required || parentRoles.has(actualRole))
-        return true
+      if (actualRole === required || parentRoles.has(actualRole)) return true
     }
 
     return false
@@ -158,7 +198,9 @@ export default class RolesCalc<Role: string> {
   }
 
   _getParentRolesSet(role: Role): Set<Role> {
-    let parentRoles: ?Set<Role> = this._childRolesToParentRolesFlattened.get(role)
+    let parentRoles: ?Set<Role> = this._childRolesToParentRolesFlattened.get(
+      role
+    )
     if (!parentRoles) {
       parentRoles = this._calcParentRolesSet(role)
       this._childRolesToParentRolesFlattened.set(role, parentRoles)
@@ -177,7 +219,7 @@ export default class RolesCalc<Role: string> {
   }
 
   _calcParentRolesSet(role: Role): Set<Role> {
-    const {action} = this._toResourceAndAction(role)
+    const { action } = this._toResourceAndAction(role)
 
     const roles: Set<Role> = new Set(this._alwaysAllow)
     roles.add(role)
@@ -186,7 +228,9 @@ export default class RolesCalc<Role: string> {
     let sanityCount = INHERITANCE_DEPTH_LIMIT + 1
     while (addedRoles.size) {
       if (!sanityCount--)
-        throw new Error(`could not flatten roles: inheritance depth of ${INHERITANCE_DEPTH_LIMIT} levels was exceeded`)
+        throw new Error(
+          `could not flatten roles: inheritance depth of ${INHERITANCE_DEPTH_LIMIT} levels was exceeded`
+        )
 
       let addedRolesThisPass: Set<Role> = new Set()
 
@@ -202,14 +246,18 @@ export default class RolesCalc<Role: string> {
         this._explodeResourceActionRole(addedRole).forEach(addIfNotPresent)
 
         // process inheritance links added by calls to rc.role('foo').extends('bar')
-        const userConfiguredParentRoles: ?Set<Role> = this._childRolesToParentRoles.get(addedRole)
+        const userConfiguredParentRoles: ?Set<Role> = this._childRolesToParentRoles.get(
+          addedRole
+        )
         if (userConfiguredParentRoles) {
           userConfiguredParentRoles.forEach((parentRole: Role) => {
             addIfNotPresent(parentRole)
             if (action && !this._toResourceAndAction(parentRole).action) {
               // This is a parent > child relationship, and we're looking for a child:action
               // permission. In this case, parent:action > child:action
-              addIfNotPresent(`${parentRole}${this._resourceActionSeparator}${action}`)
+              addIfNotPresent(
+                `${parentRole}${this._resourceActionSeparator}${action}`
+              )
             }
           })
         }
@@ -234,7 +282,7 @@ export default class RolesCalc<Role: string> {
    */
   _explodeResourceActionRole(role: Role): Set<Role> {
     const result: Set<Role> = new Set()
-    const {resource, action} = this._toResourceAndAction(role)
+    const { resource, action } = this._toResourceAndAction(role)
     if (resource && action) {
       result.add((resource: any))
       if (this._writeExtendsRead && 'read' === (action: any))
@@ -243,11 +291,13 @@ export default class RolesCalc<Role: string> {
     return result
   }
 
-  _toResourceAndAction(role: Role): {resource: ?Role, action: ?Role} {
-    const match = this._resourceActions ? role.match(this._resourceActionRegex) : null
+  _toResourceAndAction(role: Role): { resource: ?Role, action: ?Role } {
+    const match = this._resourceActions
+      ? role.match(this._resourceActionRegex)
+      : null
     return {
       resource: match ? (match[1]: any) : null,
-      action: match ? (match[2]: any) : null
+      action: match ? (match[2]: any) : null,
     }
   }
 }
