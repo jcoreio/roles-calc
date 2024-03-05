@@ -84,9 +84,8 @@ export default class RolesCalc<Role: string> {
 
   _childRolesToParentRolesFlattened: Map<Role, Set<Role>> = new Map()
 
-  static rolesToSet: <Role: string>(
-    ...args: Array<Roles<Role>>
-  ) => Set<Role> = rolesToSet
+  static rolesToSet: <Role: string>(...args: Array<Roles<Role>>) => Set<Role> =
+    rolesToSet
   static rolesToArray: <Role: string>(
     ...args: Array<Roles<Role>>
   ) => $ReadOnlyArray<Role> = rolesToArray
@@ -117,7 +116,7 @@ export default class RolesCalc<Role: string> {
     ) {
       throw new Error('resourceActionSeparator must be a single character')
     }
-    this._alwaysAllow = new rolesToSet(alwaysAllow || [])
+    this._alwaysAllow = rolesToSet(alwaysAllow || [])
     this._resourceActions = !!resourceActions
     this._writeExtendsRead = !!writeExtendsRead
     const sep = (this._resourceActionSeparator = resourceActionSeparator || ':')
@@ -130,9 +129,8 @@ export default class RolesCalc<Role: string> {
         for (let parentRole of rolesToIterable(parentRoles)) {
           for (let arg of childRoles) {
             for (let childRole of rolesToIterable(arg)) {
-              let parentRolesForChildRole: ?Set<Role> = this._childRolesToParentRoles.get(
-                childRole
-              )
+              let parentRolesForChildRole: ?Set<Role> =
+                this._childRolesToParentRoles.get(childRole)
               if (!parentRolesForChildRole) {
                 parentRolesForChildRole = new Set()
                 this._childRolesToParentRoles.set(
@@ -200,9 +198,8 @@ export default class RolesCalc<Role: string> {
   }
 
   _getParentRolesSet(role: Role): Set<Role> {
-    let parentRoles: ?Set<Role> = this._childRolesToParentRolesFlattened.get(
-      role
-    )
+    let parentRoles: ?Set<Role> =
+      this._childRolesToParentRolesFlattened.get(role)
     if (!parentRoles) {
       parentRoles = this._calcParentRolesSet(role)
       this._childRolesToParentRolesFlattened.set(role, parentRoles)
@@ -248,9 +245,8 @@ export default class RolesCalc<Role: string> {
         this._explodeResourceActionRole(addedRole).forEach(addIfNotPresent)
 
         // process inheritance links added by calls to rc.role('foo').extends('bar')
-        const userConfiguredParentRoles: ?Set<Role> = this._childRolesToParentRoles.get(
-          addedRole
-        )
+        const userConfiguredParentRoles: ?Set<Role> =
+          this._childRolesToParentRoles.get(addedRole)
         if (userConfiguredParentRoles) {
           userConfiguredParentRoles.forEach((parentRole: Role) => {
             addIfNotPresent(parentRole)

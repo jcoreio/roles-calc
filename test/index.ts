@@ -1,11 +1,10 @@
-// @flow
-
 import { describe, it } from 'mocha'
 import { expect } from 'chai'
 import RolesCalc, { rolesToObject, INHERITANCE_DEPTH_LIMIT } from '../src'
 
 describe('rolesToObject', () => {
   it('throws for falsy values', () => {
+    // @ts-expect-error invalid
     expect(() => rolesToObject(0)).to.throw(Error)
   })
   it('handles string', () => {
@@ -25,7 +24,7 @@ describe('rolesToObject', () => {
   })
   it('merges mix of things', () => {
     expect(
-      rolesToObject(
+      rolesToObject<'foo' | 'bar' | 'baz' | 'glab' | 'qux'>(
         new Set(['foo', 'bar']),
         'bar',
         { baz: true, glab: false },
@@ -56,7 +55,7 @@ describe('RolesCalc', () => {
   })
   describe('getParentRolesSet', () => {
     it('always returns a new set', () => {
-      const rc = new RolesCalc({ alwaysAllow: ['admin'] })
+      const rc = new RolesCalc<'admin' | 'foo'>({ alwaysAllow: ['admin'] })
       expect(rc.getParentRolesSet('foo')).not.to.equal(
         rc.getParentRolesSet('foo')
       )
@@ -77,7 +76,7 @@ describe('RolesCalc', () => {
   })
   describe('getRoleAndParentRolesSet', () => {
     it('includes the queried role', () => {
-      const rc = new RolesCalc({ alwaysAllow: ['admin'] })
+      const rc = new RolesCalc<'admin' | 'foo'>({ alwaysAllow: ['admin'] })
       expect(rc.getRoleAndParentRolesSet('foo').has('foo')).to.be.true
     })
   })
@@ -92,7 +91,7 @@ describe('RolesCalc', () => {
       Array.from(rc.getRoleAndParentRolesSet('worker:read')).sort()
     ).to.deep.equal(['admin', 'supervisor', 'worker', 'worker:read'])
   })
-  function testForSeparator(sep: string) {
+  function testForSeparator<sep extends string>(sep: sep) {
     const rolesCalcOpts = {
       resourceActions: true,
       writeExtendsRead: true,
@@ -284,7 +283,23 @@ describe('RolesCalc', () => {
       })
 
       it('super evil challenge', () => {
-        const rc = new RolesCalc({ ...rolesCalcOpts, alwaysAllow: 'admin' })
+        const rc = new RolesCalc<
+          | 'blah'
+          | 'admin'
+          | 'foo'
+          | `foo${sep}read`
+          | 'bar'
+          | `bar${sep}read`
+          | `bar${sep}write`
+          | 'baz'
+          | `baz${sep}write`
+          | `baz${sep}read`
+          | 'qux'
+          | 'glorm'
+          | `glorm${sep}write`
+          | `glorm${sep}read`
+          | 'flok'
+        >({ ...rolesCalcOpts, alwaysAllow: 'admin' })
         rc.role('blah').extends('admin')
         rc.role(`foo${sep}read`).extends(`bar${sep}read`)
         rc.role(`bar${sep}read`).extends(`baz${sep}write`)
@@ -300,7 +315,13 @@ describe('RolesCalc', () => {
       })
 
       it('accepts properly configured global admin permissions', () => {
-        const rc = new RolesCalc({
+        const rc = new RolesCalc<
+          | 'admin'
+          | 'owner'
+          | 'manager'
+          | `money${sep}embezzle`
+          | `intern${sep}demean`
+        >({
           ...rolesCalcOpts,
           alwaysAllow: ['admin', 'owner'],
         })
@@ -313,7 +334,9 @@ describe('RolesCalc', () => {
       })
 
       it('rejects global admin permissions that have not been configured', () => {
-        const rc = new RolesCalc({
+        const rc = new RolesCalc<
+          'admin' | 'owner' | `money${sep}waste` | 'manager'
+        >({
           ...rolesCalcOpts,
           alwaysAllow: ['admin', 'owner'],
         })
@@ -322,10 +345,10 @@ describe('RolesCalc', () => {
         ).to.equal(false)
       })
 
-      const roleForLevel = (level) => `level${level}`
+      const roleForLevel = (level: number): `level${number}` => `level${level}`
 
       it(`handles ${INHERITANCE_DEPTH_LIMIT} levels of inheritance`, () => {
-        const rc = new RolesCalc(rolesCalcOpts)
+        const rc = new RolesCalc<`level${number}`>(rolesCalcOpts)
         for (let level = 0; level < INHERITANCE_DEPTH_LIMIT; ++level) {
           rc.role(roleForLevel(level + 1)).extends(roleForLevel(level))
         }
@@ -413,9 +436,9 @@ describe('RolesCalc', () => {
         })
         it('does not change non-redundant roles for Set', () => {
           const rc = new RolesCalc(rolesCalcOpts)
-          expect(
-            rc.pruneRedundantRoles(new Set(['foo', 'bar']))
-          ).to.deep.equal(['foo', 'bar'])
+          expect(rc.pruneRedundantRoles(new Set(['foo', 'bar']))).to.deep.equal(
+            ['foo', 'bar']
+          )
         })
         it('does not change non-redundant roles for Object', () => {
           const rc = new RolesCalc(rolesCalcOpts)
@@ -457,7 +480,10 @@ describe('RolesCalc', () => {
           ).to.deep.equal(['foo', 'baker'])
         })
         it('prunes roles that are redundant based on "always allow" declarations', () => {
-          const rc = new RolesCalc({ ...rolesCalcOpts, alwaysAllow: 'admin' })
+          const rc = new RolesCalc<'admin' | 'employee'>({
+            ...rolesCalcOpts,
+            alwaysAllow: 'admin',
+          })
           expect(rc.pruneRedundantRoles(['employee', 'admin'])).to.deep.equal([
             'admin',
           ])
@@ -468,14 +494,14 @@ describe('RolesCalc', () => {
         it(`explodes resource${sep}action roles that are extended by other roles`, () => {
           const rc: RolesCalc<string> = new RolesCalc(rolesCalcOpts)
           expect(
-            Array.from(rc._explodeResourceActionRole((`foo${sep}bar`: any)))
+            Array.from(rc._explodeResourceActionRole(`foo${sep}bar`))
           ).to.deep.equal(['foo'])
         })
 
         it(`explodes resource${sep}read role into resource${sep}write role when write extends read`, () => {
           const rc: RolesCalc<string> = new RolesCalc(rolesCalcOpts)
           expect(
-            Array.from(rc._explodeResourceActionRole((`foo${sep}read`: any)))
+            Array.from(rc._explodeResourceActionRole(`foo${sep}read`))
           ).to.deep.equal(['foo', `foo${sep}write`])
         })
 
@@ -485,13 +511,13 @@ describe('RolesCalc', () => {
             writeExtendsRead: false,
           })
           expect(
-            Array.from(rc._explodeResourceActionRole((`foo${sep}read`: any)))
+            Array.from(rc._explodeResourceActionRole(`foo${sep}read`))
           ).to.deep.equal(['foo'])
         })
 
         it('does not explode roles that do not follow the resource:action pattern', () => {
           const rc: RolesCalc<string> = new RolesCalc(rolesCalcOpts)
-          for (let pattern of [
+          for (const pattern of [
             `${sep}foo`,
             sep,
             'baz',

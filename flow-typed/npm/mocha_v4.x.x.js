@@ -12,7 +12,7 @@ declare interface $npm$mocha$SetupOptions {
   grep?: any;
 }
 
-declare type $npm$mocha$done = (error?: any) => any;
+declare type $npm$mocha$done = (error?: any) => any
 
 // declare interface $npm$mocha$SuiteCallbackContext {
 //   timeout(ms: number): void;
@@ -35,18 +35,42 @@ declare interface $npm$mocha$Suite {
 }
 
 declare type $npm$mocha$ContextDefinition = {|
-  (description: string, callback: (/* this: $npm$mocha$SuiteCallbackContext */) => void): $npm$mocha$Suite;
-  only(description: string, callback: (/* this: $npm$mocha$SuiteCallbackContext */) => void): $npm$mocha$Suite;
-  skip(description: string, callback: (/* this: $npm$mocha$SuiteCallbackContext */) => void): void;
-  timeout(ms: number): void;
+  (
+    description: string,
+    callback: () => /* this: $npm$mocha$SuiteCallbackContext */ void
+  ): $npm$mocha$Suite,
+  only(
+    description: string,
+    callback: () => /* this: $npm$mocha$SuiteCallbackContext */ void
+  ): $npm$mocha$Suite,
+  skip(
+    description: string,
+    callback: () => /* this: $npm$mocha$SuiteCallbackContext */ void
+  ): void,
+  timeout(ms: number): void,
 |}
 
 declare type $npm$mocha$TestDefinition = {|
-  (expectation: string, callback?: (/* this: $npm$mocha$TestCallbackContext, */ done: $npm$mocha$done) => mixed): $npm$mocha$Test;
-  only(expectation: string, callback?: (/* this: $npm$mocha$TestCallbackContext, */ done: $npm$mocha$done) => mixed): $npm$mocha$Test;
-  skip(expectation: string, callback?: (/* this: $npm$mocha$TestCallbackContext, */ done: $npm$mocha$done) => mixed): void;
-  timeout(ms: number): void;
-  state: 'failed' | 'passed';
+  (
+    expectation: string,
+    callback?: (
+      /* this: $npm$mocha$TestCallbackContext, */ done: $npm$mocha$done
+    ) => mixed
+  ): $npm$mocha$Test,
+  only(
+    expectation: string,
+    callback?: (
+      /* this: $npm$mocha$TestCallbackContext, */ done: $npm$mocha$done
+    ) => mixed
+  ): $npm$mocha$Test,
+  skip(
+    expectation: string,
+    callback?: (
+      /* this: $npm$mocha$TestCallbackContext, */ done: $npm$mocha$done
+    ) => mixed
+  ): void,
+  timeout(ms: number): void,
+  state: 'failed' | 'passed',
 |}
 
 declare interface $npm$mocha$Runner {}
@@ -77,18 +101,24 @@ declare class $npm$mocha$MarkdownReporter extends $npm$mocha$BaseReporter {}
 declare class $npm$mocha$MinReporter extends $npm$mocha$BaseReporter {}
 declare class $npm$mocha$NyanReporter extends $npm$mocha$BaseReporter {}
 declare class $npm$mocha$ProgressReporter extends $npm$mocha$BaseReporter {
-  constructor(runner: $npm$mocha$Runner, options?: {
-    open?: string,
-    complete?: string,
-    incomplete?: string,
-    close?: string,
-    ...
-  }): $npm$mocha$ProgressReporter;
+  constructor(
+    runner: $npm$mocha$Runner,
+    options?: {
+      open?: string,
+      complete?: string,
+      incomplete?: string,
+      close?: string,
+      ...
+    }
+  ): $npm$mocha$ProgressReporter;
 }
 declare class $npm$mocha$SpecReporter extends $npm$mocha$BaseReporter {}
 declare class $npm$mocha$TAPReporter extends $npm$mocha$BaseReporter {}
 declare class $npm$mocha$XUnitReporter extends $npm$mocha$BaseReporter {
-  constructor(runner: $npm$mocha$Runner, options?: any): $npm$mocha$XUnitReporter;
+  constructor(
+    runner: $npm$mocha$Runner,
+    options?: any
+  ): $npm$mocha$XUnitReporter;
 }
 
 declare class $npm$mocha$Mocha {
@@ -170,68 +200,119 @@ declare interface $npm$mocha$Test extends $npm$mocha$Runnable {
 //   currentTest: $npm$mocha$Test;
 // }
 
-declare var mocha: $npm$mocha$Mocha;
-declare var describe: $npm$mocha$ContextDefinition;
-declare var xdescribe: $npm$mocha$ContextDefinition;
-declare var context: $npm$mocha$ContextDefinition;
-declare var suite: $npm$mocha$ContextDefinition;
-declare var it: $npm$mocha$TestDefinition;
-declare var xit: $npm$mocha$TestDefinition;
-declare var test: $npm$mocha$TestDefinition;
-declare var specify: $npm$mocha$TestDefinition;
+declare var mocha: $npm$mocha$Mocha
+declare var describe: $npm$mocha$ContextDefinition
+declare var xdescribe: $npm$mocha$ContextDefinition
+declare var context: $npm$mocha$ContextDefinition
+declare var suite: $npm$mocha$ContextDefinition
+declare var it: $npm$mocha$TestDefinition
+declare var xit: $npm$mocha$TestDefinition
+declare var test: $npm$mocha$TestDefinition
+declare var specify: $npm$mocha$TestDefinition
 
-type Run = () => void;
+type Run = () => void
 
-declare var run: Run;
+declare var run: Run
 
-type Setup = (callback: (/* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done) => mixed) => void;
-type Teardown = (callback: (/* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done) => mixed) => void;
-type SuiteSetup = (callback: (/* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done) => mixed) => void;
-type SuiteTeardown = (callback: (/* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done) => mixed) => void;
-type Before =
-  | (callback: (/* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done) => mixed) => void
-  | (description: string, callback: (/* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done) => mixed) => void;
-type After =
-  | (callback: (/* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done) => mixed) => void
-  | (description: string, callback: (/* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done) => mixed) => void;
-type BeforeEach =
-  | (callback: (/* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done) => mixed) => void
-  | (description: string, callback: (/* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done) => mixed) => void;
-type AfterEach =
-  | (callback: (/* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done) => mixed) => void
-  | (description: string, callback: (/* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done) => mixed) => void;
+type Setup = (
+  callback: (
+    /* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done
+  ) => mixed
+) => void
+type Teardown = (
+  callback: (
+    /* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done
+  ) => mixed
+) => void
+type SuiteSetup = (
+  callback: (
+    /* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done
+  ) => mixed
+) => void
+type SuiteTeardown = (
+  callback: (
+    /* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done
+  ) => mixed
+) => void
+type Before = (
+  callback: (
+    /* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done
+  ) => mixed
+) =>
+  | void
+  | ((
+      description: string,
+      callback: (
+        /* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done
+      ) => mixed
+    ) => void)
+type After = (
+  callback: (
+    /* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done
+  ) => mixed
+) =>
+  | void
+  | ((
+      description: string,
+      callback: (
+        /* this: $npm$mocha$HookCallbackContext, */ done: $npm$mocha$done
+      ) => mixed
+    ) => void)
+type BeforeEach = (
+  callback: (
+    /* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done
+  ) => mixed
+) =>
+  | void
+  | ((
+      description: string,
+      callback: (
+        /* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done
+      ) => mixed
+    ) => void)
+type AfterEach = (
+  callback: (
+    /* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done
+  ) => mixed
+) =>
+  | void
+  | ((
+      description: string,
+      callback: (
+        /* this: $npm$mocha$BeforeAndAfterContext, */ done: $npm$mocha$done
+      ) => mixed
+    ) => void)
 
-
-declare var setup: Setup;
-declare var teardown: Teardown;
-declare var suiteSetup: SuiteSetup;
-declare var suiteTeardown;
+declare var setup: Setup
+declare var teardown: Teardown
+declare var suiteSetup: SuiteSetup
+declare var suiteTeardown
 declare var before: Before
-declare var after: After;
-declare var beforeEach: BeforeEach;
-declare var afterEach: AfterEach;
+declare var after: After
+declare var beforeEach: BeforeEach
+declare var afterEach: AfterEach
 
-declare module "mocha" {
-  declare export var mocha: $npm$mocha$TestDefinition;
-  declare export var describe: $npm$mocha$ContextDefinition;
-  declare export var xdescribe: $npm$mocha$ContextDefinition;
-  declare export var context: $npm$mocha$ContextDefinition;
-  declare export var suite: $npm$mocha$ContextDefinition;
-  declare export var it: $npm$mocha$TestDefinition;
-  declare export var xit: $npm$mocha$TestDefinition;
-  declare export var test: $npm$mocha$TestDefinition;
-  declare export var specify: $npm$mocha$TestDefinition;
+declare module 'mocha' {
+  declare export var mocha: $npm$mocha$TestDefinition
+  declare export var describe: $npm$mocha$ContextDefinition
+  declare export var xdescribe: $npm$mocha$ContextDefinition
+  declare export var context: $npm$mocha$ContextDefinition
+  declare export var suite: $npm$mocha$ContextDefinition
+  declare export var it: $npm$mocha$TestDefinition
+  declare export var xit: $npm$mocha$TestDefinition
+  declare export var test: $npm$mocha$TestDefinition
+  declare export var specify: $npm$mocha$TestDefinition
 
-  declare export var run: Run;
+  declare export var run: Run
 
-  declare export var setup: Setup;
-  declare export var teardown: Teardown;
-  declare export var suiteSetup: SuiteSetup;
-  declare export var suiteTeardown: SuiteTeardown;
-  declare export var before: Before;
-  declare export var after: After;
-  declare export var beforeEach: BeforeEach;
-  declare export var afterEach: AfterEach;
+  declare export var setup: Setup
+  declare export var teardown: Teardown
+  declare export var suiteSetup: SuiteSetup
+  declare export var suiteTeardown: SuiteTeardown
+  declare export var before: Before
+  declare export var after: After
+  declare export var beforeEach: BeforeEach
+  declare export var afterEach: AfterEach
 
-  declare export default $npm$mocha$Mocha;
+  declare export default $npm$mocha$Mocha
 }

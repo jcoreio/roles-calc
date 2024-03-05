@@ -14,7 +14,7 @@
  */
 
 declare module 'babel-preset-stage-1' {
-  declare module.exports: any;
+  declare module.exports: any
 }
 
 /**
@@ -23,13 +23,13 @@ declare module 'babel-preset-stage-1' {
  * needed.
  */
 declare module 'babel-preset-stage-1/lib' {
-  declare module.exports: any;
+  declare module.exports: any
 }
 
 // Filename aliases
 declare module 'babel-preset-stage-1/lib/index' {
-  declare module.exports: $Exports<'babel-preset-stage-1/lib'>;
+  declare module.exports: $Exports<'babel-preset-stage-1/lib'>
 }
 declare module 'babel-preset-stage-1/lib/index.js' {
-  declare module.exports: $Exports<'babel-preset-stage-1/lib'>;
+  declare module.exports: $Exports<'babel-preset-stage-1/lib'>
 }

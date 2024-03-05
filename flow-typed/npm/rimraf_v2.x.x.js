@@ -8,13 +8,13 @@ declare module 'rimraf' {
     glob?: boolean,
     disableGlob?: boolean,
     ...
-  };
-  
-  declare type Callback = (err: ?Error, path: ?string) => void;
+  }
+
+  declare type Callback = (err: ?Error, path: ?string) => void
 
   declare module.exports: {
     (f: string, opts?: Options | Callback, callback?: Callback): void,
     sync(path: string, opts?: Options): void,
     ...
-  };
+  }
 }
