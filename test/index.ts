@@ -51,7 +51,8 @@ describe('RolesCalc', () => {
       Array.from(rc.getRoleAndParentRolesSet('worker:read')).sort()
     ).to.deep.equal(['admin', 'supervisor', 'worker', 'worker:read'])
     const rc2 = rc.clone()
-    expect(rc2).to.be.instanceOf(RolesCalc)
+    expect(rc2).to.be.an.instanceof(RolesCalc)
+    expect(rc2).to.deep.equal(rc)
     expect(
       Array.from(rc.getRoleAndParentRolesSet('worker:read')).sort()
     ).to.deep.equal(['admin', 'supervisor', 'worker', 'worker:read'])
