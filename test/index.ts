@@ -41,6 +41,30 @@ describe('rolesToObject', () => {
   })
 })
 describe('RolesCalc', () => {
+  it('clones into new RolesCalc', () => {
+    const rc = new RolesCalc()
+    rc.role('supervisor').extends('worker')
+    rc.role('admin').extends('supervisor')
+    rc.role('worker').extends('person')
+    rc.role('worker').extends('worker:read')
+    expect(
+      Array.from(rc.getRoleAndParentRolesSet('worker:read')).sort()
+    ).to.deep.equal(['admin', 'supervisor', 'worker', 'worker:read'])
+    const rc2 = rc.clone()
+    expect(rc2).to.be.instanceOf(RolesCalc)
+    expect(
+      Array.from(rc.getRoleAndParentRolesSet('worker:read')).sort()
+    ).to.deep.equal(['admin', 'supervisor', 'worker', 'worker:read'])
+    expect(rc2.isAuthorized({ required: 'admin', actual: 'admin' })).to.equal(
+      true
+    )
+    expect(
+      rc2.isAuthorized({ required: 'worker:read', actual: 'worker:read' })
+    ).to.equal(true)
+    expect(
+      rc2.isAuthorized({ required: 'worker', actual: 'worker:read' })
+    ).to.equal(false)
+  })
   it('throws an error if resourceActionSeparator is not of length 1', () => {
     expect(() => new RolesCalc({ resourceActionSeparator: '' })).to.throw(Error)
     expect(() => new RolesCalc({ resourceActionSeparator: 'ab' })).to.throw(

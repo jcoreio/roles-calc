@@ -72,14 +72,12 @@ export const INHERITANCE_DEPTH_LIMIT = 20
 
 export default class RolesCalc<Role extends string> {
   _resourceActions: boolean // defaults to false
-
   _writeExtendsRead: boolean // defaults to false
-
   _resourceActionRegex: RegExp
   _resourceActionSeparator: string
   _alwaysAllow: Set<Role>
-  /** relationships, as defined by the user */
 
+  /** relationships, as defined by the user */
   _childRolesToParentRoles: Map<Role, Set<Role>> = new Map()
   _childRolesToParentRolesFlattened: Map<Role, Set<Role>> = new Map()
   static rolesToSet: <Role extends string>(
@@ -148,6 +146,25 @@ export default class RolesCalc<Role extends string> {
         }
       },
     }
+  }
+
+  clone(): RolesCalc<Role> {
+    const newCalc = new RolesCalc<Role>({
+      alwaysAllow: this._alwaysAllow,
+      resourceActions: this._resourceActions,
+      writeExtendsRead: this._writeExtendsRead,
+      resourceActionSeparator: this._resourceActionSeparator,
+    })
+
+    newCalc._childRolesToParentRoles = new Map(
+      this._childRolesToParentRoles.entries()
+    )
+
+    newCalc._childRolesToParentRolesFlattened = new Map(
+      this._childRolesToParentRolesFlattened.entries()
+    )
+
+    return newCalc
   }
 
   isAuthorized(args: { required: Roles<Role>; actual: Roles<Role> }): boolean {
