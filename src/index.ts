@@ -60,7 +60,7 @@ export function rolesToObject<Role extends string>(
     return args[0]
   }
 
-  const result: Record<string, any> = {}
+  const result: RolesObject<Role> = {}
 
   for (const role of rolesToIterable(...args)) {
     result[role] = true
