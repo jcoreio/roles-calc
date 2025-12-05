@@ -116,6 +116,7 @@ describe('RolesCalc', () => {
       Array.from(rc.getRoleAndParentRolesSet('worker:read')).sort()
     ).to.deep.equal(['admin', 'supervisor', 'worker', 'worker:read'])
   })
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   function testForSeparator<sep extends string>(sep: sep) {
     const rolesCalcOpts = {
       resourceActions: true,

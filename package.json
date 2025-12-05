@@ -23,33 +23,26 @@
   },
   "homepage": "https://github.com/jcoreio/roles-calc#readme",
   "devDependencies": {
-    "@babel/eslint-parser": "^7.12.13",
-    "@babel/plugin-syntax-flow": "^7.14.5",
-    "@babel/plugin-transform-react-jsx": "^7.14.9",
-    "@jcoreio/toolchain": "^3.4.0",
-    "@jcoreio/toolchain-circle": "^3.4.0",
-    "@jcoreio/toolchain-esnext": "^3.4.0",
-    "@jcoreio/toolchain-flow": "^3.4.0",
-    "@jcoreio/toolchain-mocha": "^3.4.0",
-    "@jcoreio/toolchain-semantic-release": "^3.4.0",
-    "@jcoreio/toolchain-typescript": "^3.4.0",
-    "@types/chai": "^4.0.0",
+    "@jcoreio/toolchain": "^5.8.6",
+    "@jcoreio/toolchain-circle": "^5.8.6",
+    "@jcoreio/toolchain-esnext": "^5.8.6",
+    "@jcoreio/toolchain-mocha": "^5.8.6",
+    "@jcoreio/toolchain-semantic-release": "^5.8.6",
+    "@jcoreio/toolchain-typescript": "^5.8.6",
+    "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.6",
-    "@typescript-eslint/eslint-plugin": "^5.60.0",
-    "@typescript-eslint/parser": "^5.60.0",
     "chai": "^4.3.7",
-    "copy": "^0.3.2",
-    "cross-env": "^7.0.3",
-    "eslint": "^8.43.0",
+    "eslint": "^9.17.0",
     "eslint-config-prettier": "^7.2.0",
-    "eslint-plugin-flowtype": "^8.0.3",
-    "flow-bin": "^0.143.1",
+    "globals": "^16.0.0",
+    "lint-staged": "^15.2.2",
     "mocha": "^10.2.0",
-    "rimraf": "^3.0.2",
+    "nyc": "^15.1.0",
+    "prettier": "^3.4.2",
     "typescript": "^5.1.0"
   },
   "dependencies": {
-    "@babel/runtime": "^7.18.6"
+    "@babel/runtime": "^7.26.0"
   },
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -57,7 +50,10 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": {
+        "import": "./dist/index.d.mts",
+        "default": "./dist/index.d.ts"
+      },
       "import": "./dist/index.mjs",
       "default": "./dist/index.js"
     }
@@ -65,5 +61,8 @@
   "engines": {
     "node": ">=16"
   },
-  "packageManager": "pnpm@8.11.0"
+  "packageManager": "pnpm@10.6.5",
+  "@jcoreio/toolchain": {
+    "migratedVersion": "5.8.6"
+  }
 }

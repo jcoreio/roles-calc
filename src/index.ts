@@ -19,6 +19,7 @@ export function* rolesToIterable<Role extends string>(
   for (const roles of args) {
     if (roles instanceof Set || Array.isArray(roles)) yield* roles
     else if (typeof roles === 'string') yield roles
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     else if (typeof roles === 'object' && roles != null) {
       const finalRoles = roles
 
@@ -55,6 +56,7 @@ export function rolesToObject<Role extends string>(
     !Array.isArray(args[0]) &&
     !(args[0] instanceof Set) &&
     typeof args[0] === 'object' &&
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     args[0] != null
   ) {
     return args[0]
@@ -315,9 +317,8 @@ export default class RolesCalc<Role extends string> {
     resource: Role | null | undefined
     action: Role | null | undefined
   } {
-    const match = this._resourceActions
-      ? role.match(this._resourceActionRegex)
-      : null
+    const match =
+      this._resourceActions ? role.match(this._resourceActionRegex) : null
     return {
       resource: match ? (match[1] as any) : null,
       action: match ? (match[2] as any) : null,
